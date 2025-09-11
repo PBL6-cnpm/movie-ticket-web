@@ -32,39 +32,15 @@ const HomeSection = () => {
         <div className="max-w-4xl mx-auto p-6 text-center space-y-8">
             <div className="card p-6 space-y-4">
                 <h2 className="text-2xl font-semibold mb-4 text-primary">Demo Accounts</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="card p-4">
-                        <div className="text-red-400 font-bold text-lg mb-2">Admin</div>
-                        <p className="text-sm text-secondary mb-2">Full system access</p>
-                        <p className="text-xs font-mono bg-surface text-secondary p-2 rounded">
-                            admin@example.com
-                        </p>
-                        <p className="text-xs font-mono bg-surface text-secondary p-2 rounded mt-1">
-                            123456
-                        </p>
-                    </div>
-
-                    <div className="card p-4">
-                        <div className="text-secondary font-bold text-lg mb-2">Employee</div>
-                        <p className="text-sm text-secondary mb-2">Booking & customer service</p>
-                        <p className="text-xs font-mono bg-surface text-secondary p-2 rounded">
-                            employee@example.com
-                        </p>
-                        <p className="text-xs font-mono bg-surface text-secondary p-2 rounded mt-1">
-                            123456
-                        </p>
-                    </div>
-
-                    <div className="card p-4">
-                        <div className="text-primary font-bold text-lg mb-2">Customer</div>
-                        <p className="text-sm text-secondary mb-2">Book tickets & browse movies</p>
-                        <p className="text-xs font-mono bg-surface text-secondary p-2 rounded">
-                            user@example.com
-                        </p>
-                        <p className="text-xs font-mono bg-surface text-secondary p-2 rounded mt-1">
-                            123456
-                        </p>
-                    </div>
+                <div className="card p-4">
+                    <div className="text-primary font-bold text-lg mb-2">Customer</div>
+                    <p className="text-sm text-secondary mb-2">Book tickets & browse movies</p>
+                    <p className="text-xs font-mono bg-surface text-secondary p-2 rounded">
+                        user@example.com
+                    </p>
+                    <p className="text-xs font-mono bg-surface text-secondary p-2 rounded mt-1">
+                        123456
+                    </p>
                 </div>
             </div>
         </div>

@@ -1,1 +1,0 @@
-export { employeeRoute } from './EmployeeRoute'
