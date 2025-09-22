@@ -20,7 +20,6 @@ const LoginForm = () => {
         if (result.success) {
             console.log('Login successful!')
 
-            // Redirect dựa trên role của user
             if ('user' in result && result.user) {
                 const redirectPath = getRedirectPathByRole(result.user.role_id)
                 navigate({ to: redirectPath })
