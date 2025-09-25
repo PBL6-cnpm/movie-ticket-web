@@ -82,7 +82,7 @@ export interface ApiError {
     code?: string
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T> {
     data: T
     success?: boolean
     message?: string
