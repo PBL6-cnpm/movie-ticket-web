@@ -74,3 +74,47 @@ export type AuthAction =
     | { type: 'AUTH_ERROR'; payload: string }
     | { type: 'LOGOUT' }
     | { type: 'CLEAR_ERROR' }
+
+// API Response interfaces
+export interface ApiError {
+    message: string
+    statusCode?: number
+    code?: string
+}
+
+export interface ApiResponse<T = any> {
+    data: T
+    success?: boolean
+    message?: string
+}
+
+export interface LoginApiResponse {
+    account_id?: string
+    branch_id?: string
+    email?: string
+    coin?: number
+    status?: boolean
+    role_id?: number
+    role?: Role
+    name?: string
+    avatar?: string
+    createdAt?: string
+    updatedAt?: string
+    accessToken?: string
+    refreshToken?: string
+}
+
+export interface RegisterApiResponse {
+    message?: string
+    user?: Partial<User>
+    success?: boolean
+}
+
+export interface AxiosErrorResponse {
+    response?: {
+        data?: ApiError
+        status?: number
+        statusText?: string
+    }
+    message?: string
+}

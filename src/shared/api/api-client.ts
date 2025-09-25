@@ -4,9 +4,9 @@ if (!import.meta.env.VITE_BASE_URL) {
     throw new Error('env variable not set: VITE_BASE_URL')
 }
 
-if (!import.meta.env.VITE_API_TOKEN) {
-    throw new Error('env variable not set: VITE_API_TOKEN')
-}
+// if (!import.meta.env.VITE_API_TOKEN) {
+//     throw new Error('env variable not set: VITE_API_TOKEN')
+// }
 
 const authRequestInterceptor = (config: InternalAxiosRequestConfig) => {
     config.headers = config.headers || {}
@@ -16,8 +16,8 @@ const authRequestInterceptor = (config: InternalAxiosRequestConfig) => {
     return config
 }
 
-export const axios = Axios.create({
+export const apiClient = Axios.create({
     baseURL: import.meta.env.VITE_BASE_URL
 })
 
-axios.interceptors.request.use(authRequestInterceptor)
+apiClient.interceptors.request.use(authRequestInterceptor)
