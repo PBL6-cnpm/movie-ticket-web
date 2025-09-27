@@ -6,6 +6,7 @@ import { Input } from '@/shared/components/ui/input'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useAuth } from '../hooks/auth.hook'
+// import { useAuth } from '../hooks/auth.hook'
 
 const RegisterForm = () => {
     const [formData, setFormData] = useState({
@@ -26,10 +27,25 @@ const RegisterForm = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        const result = await register(formData)
+
+        // Validate that passwords match
+        if (formData.password !== formData.confirmPassword) {
+            return
+        }
+
+        const result = await register({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword
+        })
+
         if (result.success) {
             console.log('Registration successful!')
-            navigate({ to: '/login' })
+            navigate({
+                to: '/email-verification',
+                search: { email: formData.email }
+            })
         }
     }
 
@@ -73,7 +89,7 @@ const RegisterForm = () => {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
+                            {/* <div className="space-y-2">
                                 <label
                                     htmlFor="name"
                                     className="block text-sm font-medium text-secondary"
@@ -112,7 +128,7 @@ const RegisterForm = () => {
                                         required
                                     />
                                 </div>
-                            </div>
+                            </div> */}
 
                             <div className="space-y-2">
                                 <label
