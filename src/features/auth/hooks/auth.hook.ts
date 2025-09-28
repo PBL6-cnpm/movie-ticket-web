@@ -128,8 +128,16 @@ export const useAuth = () => {
                 throw new Error('Passwords do not match')
             }
 
+            if (!credentials.name || credentials.name.trim().length === 0) {
+                throw new Error('Full name is required')
+            }
+
             // Call the actual API
-            const response = await authApi.register(credentials.email, credentials.password)
+            const response = await authApi.register(
+                credentials.email,
+                credentials.password,
+                credentials.name
+            )
 
             if (response && response.data) {
                 const registerData: RegisterApiResponse = response.data

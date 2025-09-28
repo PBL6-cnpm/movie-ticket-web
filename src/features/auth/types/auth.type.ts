@@ -46,7 +46,7 @@ export interface RegisterCredentials {
     password: string
     confirmPassword: string
     branch_id?: string
-    name?: string // For display purposes
+    name: string // Required full name
 }
 
 export interface AuthState {
@@ -106,8 +106,9 @@ export interface LoginApiResponse {
 
 export interface RegisterApiResponse {
     message?: string
-    user?: Partial<User>
+    user?: Partial<User> & { fullName: string }
     success?: boolean
+    fullName?: string
 }
 
 export interface AxiosErrorResponse {
