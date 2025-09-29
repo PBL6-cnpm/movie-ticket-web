@@ -89,19 +89,21 @@ export interface ApiResponse<T> {
 }
 
 export interface LoginApiResponse {
-    account_id?: string
-    branch_id?: string
+    accessToken?: string
+    refreshToken?: string
+}
+
+export interface AccountResponse {
+    id?: string
+    branchId?: string
     email?: string
     coin?: number
-    status?: boolean
-    role_id?: number
-    role?: Role
+    status?: string
+    roleNames?: string[]
     name?: string
     avatar?: string
     createdAt?: string
     updatedAt?: string
-    accessToken?: string
-    refreshToken?: string
 }
 
 export interface RegisterApiResponse {

@@ -9,15 +9,20 @@ if (!import.meta.env.VITE_BASE_URL) {
 // }
 
 const authRequestInterceptor = (config: InternalAxiosRequestConfig) => {
-    config.headers = config.headers || {}
+    const token = localStorage.getItem('accessToken')
 
-    config.headers.authorization = import.meta.env.VITE_API_TOKEN
+    if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
 
     return config
 }
 
 export const apiClient = Axios.create({
-    baseURL: import.meta.env.VITE_BASE_URL
+    baseURL: import.meta.env.VITE_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
 })
 
 apiClient.interceptors.request.use(authRequestInterceptor)
