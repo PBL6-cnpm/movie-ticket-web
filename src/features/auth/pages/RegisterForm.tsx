@@ -28,6 +28,11 @@ const RegisterForm = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
+        // Validate full name
+        if (!formData.name || formData.name.trim().length === 0) {
+            return
+        }
+
         // Validate that passwords match
         if (formData.password !== formData.confirmPassword) {
             return
@@ -89,7 +94,7 @@ const RegisterForm = () => {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            {/* <div className="space-y-2">
+                            <div className="space-y-2">
                                 <label
                                     htmlFor="name"
                                     className="block text-sm font-medium text-secondary"
@@ -128,7 +133,7 @@ const RegisterForm = () => {
                                         required
                                     />
                                 </div>
-                            </div> */}
+                            </div>
 
                             <div className="space-y-2">
                                 <label

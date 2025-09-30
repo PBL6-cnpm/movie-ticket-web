@@ -1,26 +1,28 @@
 import { apiClient } from './api-client'
 
-export const register = async (email: string, password: string) => {
-    if (!email || !password) return
+const BASE_URL = '/auth'
 
-    console.log(email + ' ' + password)
+export const register = async (email: string, password: string, fullName: string) => {
+    if (!email || !password || !fullName) return
 
-    return apiClient.post(
-        '/auth/register',
-        { email, password },
-        {
-            headers: { 'Content-Type': 'application/json' }
-        }
-    )
+    console.log(email + ' ' + password + ' ' + fullName)
+
+    const payload = {
+        email,
+        password,
+        fullName
+    }
+
+    return apiClient.post(`${BASE_URL}/register`, payload, {
+        headers: { 'Content-Type': 'application/json' }
+    })
 }
 
 export const login = async (email: string, password: string) => {
     if (!email || !password) return
 
-    console.log(email + ' ' + password)
-
     return apiClient.post(
-        '/auth/login',
+        `${BASE_URL}/login`,
         { email, password },
         {
             headers: { 'Content-Type': 'application/json' }

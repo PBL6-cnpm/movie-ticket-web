@@ -1,19 +1,13 @@
 import * as authApi from '@/shared/api/auth-api'
 import { useAuthStore } from '../stores/auth.store'
 import type {
+    AccountResponse,
     AxiosErrorResponse,
-    LoginApiResponse,
     LoginCredentials,
     RegisterApiResponse,
-    RegisterCredentials,
-    UserWithDetails
+    RegisterCredentials
 } from '../types/auth.type'
-import {
-    ROLE_IDS,
-    getPermissionsByRoleId,
-    validateEmail,
-    validatePassword
-} from '../utils/auth.utils'
+import { validateEmail, validatePassword } from '../utils/auth.utils'
 
 // Mock users database - keeping for reference but not used in production
 // const MOCK_USERS: Array<{
@@ -52,37 +46,29 @@ export const useAuth = () => {
             const response = await authApi.login(credentials.email, credentials.password)
 
             if (response && response.data) {
-                const userData: LoginApiResponse = response.data
+                const data = response.data.data
+                console.log(data)
 
-                // Create user with details from API response
-                const userWithDetails: UserWithDetails = {
-                    account_id: userData.account_id || `acc_${Date.now()}`,
-                    branch_id: userData.branch_id || 'branch_001',
-                    email: userData.email || credentials.email,
-                    coin: userData.coin || 100,
-                    status: userData.status !== undefined ? userData.status : true,
-                    role_id: userData.role_id || ROLE_IDS.USER,
-                    role: userData.role || {
-                        role_id: userData.role_id || ROLE_IDS.USER,
-                        roleName: 'user'
-                    },
-                    permissions: getPermissionsByRoleId(userData.role_id || ROLE_IDS.USER),
-                    name: userData.name || 'User',
-                    avatar:
-                        userData.avatar ||
-                        `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=6366f1&color=fff`,
-                    createdAt: userData.createdAt || new Date().toISOString(),
-                    updatedAt: userData.updatedAt || new Date().toISOString()
+                if (!data || !data.accessToken) return
+
+                const account = data.account
+
+                // Create account with details from API response
+                const accountWithDetails: AccountResponse = {
+                    id: account.id,
+                    branchId: account.branchId,
+                    coin: account.coin,
+                    email: account.email,
+                    roleNames: account.roleNames,
+                    status: account.status
                 }
 
-                login(userWithDetails, {
-                    accessToken:
-                        userData.accessToken || `api-access-token-${userWithDetails.role_id}`,
-                    refreshToken:
-                        userData.refreshToken || `api-refresh-token-${userWithDetails.role_id}`
+                login(accountWithDetails, {
+                    accessToken: data.accessToken,
+                    refreshToken: 'refreshToken'
                 })
 
-                return { success: true, user: userWithDetails }
+                return { success: true, user: accountWithDetails }
             } else {
                 throw new Error('Invalid response from server')
             }
@@ -128,8 +114,16 @@ export const useAuth = () => {
                 throw new Error('Passwords do not match')
             }
 
+            if (!credentials.name || credentials.name.trim().length === 0) {
+                throw new Error('Full name is required')
+            }
+
             // Call the actual API
-            const response = await authApi.register(credentials.email, credentials.password)
+            const response = await authApi.register(
+                credentials.email,
+                credentials.password,
+                credentials.name
+            )
 
             if (response && response.data) {
                 const registerData: RegisterApiResponse = response.data
