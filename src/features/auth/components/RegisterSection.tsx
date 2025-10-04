@@ -8,7 +8,7 @@ import { useAuth } from '../hooks/auth.hook'
 
 const RegisterForm = () => {
     const [formData, setFormData] = useState({
-        name: '',
+        fullName: '',
         email: '',
         password: '',
         confirmPassword: ''
@@ -54,7 +54,7 @@ const RegisterForm = () => {
                             type="text"
                             id="name"
                             name="name"
-                            value={formData.name}
+                            value={formData.fullName}
                             onChange={handleChange}
                             placeholder="Enter your full name"
                             required
@@ -124,7 +124,7 @@ const RegisterForm = () => {
                     <p className="text-sm text-gray-600">
                         Already have an account?{' '}
                         <a href="/login" className="text-blue-600 hover:text-blue-500">
-                            Sign in
+                            Login
                         </a>
                     </p>
                 </div>

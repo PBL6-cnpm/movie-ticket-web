@@ -1,4 +1,4 @@
-import type { User } from '../../../features/auth/types/auth.type'
+import type { Account } from '@/features/auth/types/account.type'
 import AuthButtons from './AuthButtons'
 import DashboardLinks from './DashboardLinks'
 import Logo from './Logo'
@@ -8,14 +8,14 @@ import SearchBar from './SearchBar'
 import UserInfo from './UserInfo'
 
 interface DesktopHeaderProps {
-    user: User | null
+    account: Account | null
     isAuthenticated: boolean
     onMobileMenuToggle: () => void
     isMobileMenuOpen: boolean
 }
 
 export default function DesktopHeader({
-    user,
+    account,
     isAuthenticated,
     onMobileMenuToggle,
     isMobileMenuOpen
@@ -33,15 +33,26 @@ export default function DesktopHeader({
                         placeholder="Search movies, theaters..."
                     />
                 </div>
-                {isAuthenticated && user ? (
+                {isAuthenticated && account ? (
                     <>
                         <NotificationBell
                             hasUnreadNotifications={true}
                             notificationCount={3}
                             onClick={() => console.log('Notifications clicked')}
                         />
-                        <UserInfo user={user} />
-                        <DashboardLinks user={user} />
+                        <UserInfo account={account} />
+                        <DashboardLinks account={account} />
+                    </>
+                ) : (
+                    <AuthButtons />
+                )}
+            </div>
+            {/* User Section */}
+            <div className="flex items-center gap-4">
+                {isAuthenticated && account ? (
+                    <>
+                        <UserInfo account={account} />
+                        <DashboardLinks account={account} />
                     </>
                 ) : (
                     <>

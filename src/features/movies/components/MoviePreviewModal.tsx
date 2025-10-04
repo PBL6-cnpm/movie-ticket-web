@@ -36,30 +36,27 @@ const MoviePreviewModal: React.FC<MoviePreviewModalProps> = ({ movie, isVisible,
     const modalHeight = 120 // compact horizontal layout height
     const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
     const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 768
-    
+
     let left = position.x
     let top = position.y - modalHeight / 2 // Căn giữa modal theo chiều dọc
-    
+
     // Adjust if modal goes off right edge
     if (left + modalWidth > windowWidth - 20) {
         left = position.x - modalWidth - 20 // Hiển thị bên trái movie card
     }
-    
+
     // Adjust if modal goes off top edge
     if (top < 20) {
         top = 20
     }
-    
+
     // Adjust if modal goes off bottom edge
     if (top + modalHeight > windowHeight - 20) {
         top = windowHeight - modalHeight - 20
     }
 
     return (
-        <div
-            className="fixed z-[9998] pointer-events-none"
-            style={{ left, top }}
-        >
+        <div className="fixed z-[9998] pointer-events-none" style={{ left, top }}>
             <div className="bg-surface rounded-lg shadow-2xl border border-brand-primary/20 overflow-hidden w-72 scale-in">
                 {/* Movie Layout - Horizontal */}
                 <div className="flex">
@@ -89,7 +86,7 @@ const MoviePreviewModal: React.FC<MoviePreviewModalProps> = ({ movie, isVisible,
                         <h3 className="text-primary font-bold text-xs mb-1 line-clamp-1">
                             {movie.name}
                         </h3>
-                        
+
                         <p className="text-secondary text-xs mb-2 line-clamp-2 leading-tight">
                             {movie.description}
                         </p>

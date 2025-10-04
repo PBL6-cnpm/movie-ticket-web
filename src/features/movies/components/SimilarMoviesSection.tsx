@@ -1,15 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Calendar, Clock } from 'lucide-react'
 import React from 'react'
-
-interface Movie {
-    id: number
-    name: string
-    poster: string
-    releaseDate: string
-    duration: number
-    genres: Array<{ id: number; name: string }>
-}
+import type { Movie } from '../../../shared/types/movies.types'
 
 interface SimilarMoviesSectionProps {
     movies: Movie[]
@@ -38,7 +30,7 @@ const SimilarMoviesSection: React.FC<SimilarMoviesSectionProps> = ({ movies }) =
                     <Link
                         key={movie.id}
                         to="/movie/$movieId"
-                        params={{ movieId: movie.id.toString() }}
+                        params={{ movieId: movie.id }}
                         className="group"
                     >
                         <div className="bg-brand rounded-xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">

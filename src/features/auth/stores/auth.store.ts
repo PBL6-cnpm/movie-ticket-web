@@ -1,11 +1,13 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { AccountResponse, AuthState } from '../types/auth.type'
+import type { Account } from '../types/account.type'
+import type { AuthState } from '../types/auth.type'
 
 interface AuthStore extends Omit<AuthState, 'user'> {
-    user: AccountResponse | null
-    login: (user: AccountResponse, tokens: { accessToken: string; refreshToken: string }) => void
+    account: Account | null
+    login: (account: Account, tokens: { accessToken: string; refreshToken?: string }) => void
     logout: () => void
+    updateAccessToken: (accessToken: string) => void
     setLoading: (loading: boolean) => void
     setError: (error: string | null) => void
     clearError: () => void
@@ -14,17 +16,17 @@ interface AuthStore extends Omit<AuthState, 'user'> {
 export const useAuthStore = create<AuthStore>()(
     persist(
         (set) => ({
-            user: null,
+            account: null,
             isLoading: false,
             isAuthenticated: false,
             error: null,
 
-            login: (user, tokens) => {
+            login: (account, tokens) => {
                 localStorage.setItem('accessToken', tokens.accessToken)
 
-                localStorage.setItem('refreshToken', tokens.refreshToken)
+                // localStorage.setItem('refreshToken', tokens.refreshToken)
                 set({
-                    user,
+                    account,
                     isAuthenticated: true,
                     isLoading: false,
                     error: null
@@ -33,13 +35,17 @@ export const useAuthStore = create<AuthStore>()(
 
             logout: () => {
                 localStorage.removeItem('accessToken')
-                localStorage.removeItem('refreshToken')
+                // localStorage.removeItem('refreshToken')
                 set({
-                    user: null,
+                    account: null,
                     isAuthenticated: false,
                     isLoading: false,
                     error: null
                 })
+            },
+
+            updateAccessToken: (accessToken) => {
+                localStorage.setItem('accessToken', accessToken)
             },
 
             setLoading: (isLoading) => set({ isLoading }),
@@ -52,7 +58,7 @@ export const useAuthStore = create<AuthStore>()(
             name: 'auth-storage',
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
-                user: state.user,
+                account: state.account,
                 isAuthenticated: state.isAuthenticated
             })
         }

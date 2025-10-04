@@ -1,6 +1,8 @@
+import { emailVerificationRoute } from './features/auth/routes/EmailVerification'
 import { forgotPasswordRoute } from './features/auth/routes/ForgotPassword'
 import { loginRoute } from './features/auth/routes/Login'
 import { registerRoute } from './features/auth/routes/Register'
+import { verifyEmailRoute } from './features/auth/routes/VerifyEmail'
 import { homeRoute } from './features/home/routes/HomeRoute'
 import { actorDetailRoute } from './features/movies/routes/ActorDetailRoute'
 import { movieDetailRoute } from './features/movies/routes/MovieDetailRoute'
@@ -12,6 +14,8 @@ export const routeTree = rootRoute.addChildren([
     loginRoute,
     registerRoute,
     forgotPasswordRoute,
+    emailVerificationRoute,
+    verifyEmailRoute,
     movieDetailRoute,
     actorDetailRoute
 ])

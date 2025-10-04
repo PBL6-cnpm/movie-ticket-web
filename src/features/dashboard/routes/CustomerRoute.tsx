@@ -7,7 +7,7 @@ export const customerRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/customer',
     component: () => (
-        <ProtectedRoute requiredRoles={['user']}>
+        <ProtectedRoute requiredRoles={['account']}>
             <CustomerDashboard />
         </ProtectedRoute>
     )

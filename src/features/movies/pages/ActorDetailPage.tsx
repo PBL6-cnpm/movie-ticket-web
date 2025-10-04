@@ -1,11 +1,11 @@
 import { Link, useParams } from '@tanstack/react-router'
 import { Calendar, Film } from 'lucide-react'
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
+import MoviePreviewModal from '../components/MoviePreviewModal'
 import { useActorDetail } from '../hooks/useActorDetail'
 import { useMoviePreview } from '../hooks/useMoviePreview'
-import MoviePreviewModal from '../components/MoviePreviewModal'
 
 const ActorDetailPage: React.FC = () => {
     const params = useParams({ from: '/actor/$actorId' })
@@ -13,7 +13,7 @@ const ActorDetailPage: React.FC = () => {
     const [hoveredMovieId, setHoveredMovieId] = useState<string | null>(null)
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
     const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
-    
+
     const { data: previewMovie } = useMoviePreview(hoveredMovieId || '', !!hoveredMovieId)
 
     // Cleanup timeout on component unmount
@@ -145,63 +145,72 @@ const ActorDetailPage: React.FC = () => {
                                 {/* Movies Grid */}
                                 {actor.movies && actor.movies.length > 0 ? (
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                                        {actor.movies.map((movie) => (
-                                            <Link
-                                                key={movie.id}
-                                                to="/movie/$movieId"
-                                                params={{ movieId: movie.id }}
-                                                className="group cursor-pointer"
-                                                onMouseEnter={(e) => {
-                                                    // Lấy vị trí của movie card element thay vì chuột
-                                                    const rect = e.currentTarget.getBoundingClientRect()
-                                                    setMousePosition({ 
-                                                        x: rect.right + 10, // Hiển thị bên phải movie card
-                                                        y: rect.top + rect.height / 2 // Căn giữa theo chiều dọc
-                                                    })
-                                                    
-                                                    // Clear existing timeout
-                                                    if (hoverTimeout) {
-                                                        clearTimeout(hoverTimeout)
-                                                    }
-                                                    
-                                                    // Set new timeout to show modal after 200ms (nhanh hơn một chút)
-                                                    const timeout = setTimeout(() => {
-                                                        setHoveredMovieId(movie.id)
-                                                    }, 200)
-                                                    setHoverTimeout(timeout)
-                                                }}
-                                                onMouseLeave={() => {
-                                                    setHoveredMovieId(null)
-                                                    
-                                                    // Clear timeout when leaving
-                                                    if (hoverTimeout) {
-                                                        clearTimeout(hoverTimeout)
-                                                        setHoverTimeout(null)
-                                                    }
-                                                }}
-                                            >
-                                                <div className="relative bg-brand-secondary/20 rounded-lg overflow-hidden border border-brand-secondary/30">
-                                                    <img
-                                                        src={movie.poster || '/default-movie.jpg'}
-                                                        alt={movie.name}
-                                                        className="w-full h-64 object-cover shadow-md group-hover:shadow-xl transition-all group-hover:scale-105 bg-brand-secondary/20"
-                                                        onError={(e) => {
-                                                            const target =
-                                                                e.target as HTMLImageElement
-                                                            target.src = `https://via.placeholder.com/200x300/648ddb/ffffff?text=${encodeURIComponent(movie.name.substring(0, 3))}`
-                                                        }}
-                                                    />
-                                                    <div className="absolute inset-0 bg-brand-primary bg-opacity-0 group-hover:bg-opacity-10 transition-all"></div>
-                                                </div>
+                                        {actor.movies.map(
+                                            (movie: {
+                                                id: string
+                                                name: string
+                                                poster: string
+                                            }) => (
+                                                <Link
+                                                    key={movie.id}
+                                                    to="/movie/$movieId"
+                                                    params={{ movieId: movie.id }}
+                                                    className="group cursor-pointer"
+                                                    onMouseEnter={(e) => {
+                                                        // Lấy vị trí của movie card element thay vì chuột
+                                                        const rect =
+                                                            e.currentTarget.getBoundingClientRect()
+                                                        setMousePosition({
+                                                            x: rect.right + 10, // Hiển thị bên phải movie card
+                                                            y: rect.top + rect.height / 2 // Căn giữa theo chiều dọc
+                                                        })
 
-                                                {/* Movie Title */}
-                                                <div className="mt-3">
-                                                    <h3 className="text-primary font-medium text-sm group-hover:text-brand-primary transition-colors line-clamp-2">
-                                                        {movie.name}
-                                                    </h3>
-                                                </div>
-                                            </Link>
-                                        ))}
+                                                        // Clear existing timeout
+                                                        if (hoverTimeout) {
+                                                            clearTimeout(hoverTimeout)
+                                                        }
+
+                                                        // Set new timeout to show modal after 200ms (nhanh hơn một chút)
+                                                        const timeout = setTimeout(() => {
+                                                            setHoveredMovieId(movie.id)
+                                                        }, 200)
+                                                        setHoverTimeout(timeout)
+                                                    }}
+                                                    onMouseLeave={() => {
+                                                        setHoveredMovieId(null)
+
+                                                        // Clear timeout when leaving
+                                                        if (hoverTimeout) {
+                                                            clearTimeout(hoverTimeout)
+                                                            setHoverTimeout(null)
+                                                        }
+                                                    }}
+                                                >
+                                                    <div className="relative bg-brand-secondary/20 rounded-lg overflow-hidden border border-brand-secondary/30">
+                                                        <img
+                                                            src={
+                                                                movie.poster || '/default-movie.jpg'
+                                                            }
+                                                            alt={movie.name}
+                                                            className="w-full h-64 object-cover shadow-md group-hover:shadow-xl transition-all group-hover:scale-105 bg-brand-secondary/20"
+                                                            onError={(e) => {
+                                                                const target =
+                                                                    e.target as HTMLImageElement
+                                                                target.src = `https://via.placeholder.com/200x300/648ddb/ffffff?text=${encodeURIComponent(movie.name.substring(0, 3))}`
+                                                            }}
+                                                        />
+                                                        <div className="absolute inset-0 bg-brand-primary bg-opacity-0 group-hover:bg-opacity-10 transition-all"></div>
+                                                    </div>
+
+                                                    {/* Movie Title */}
+                                                    <div className="mt-3">
+                                                        <h3 className="text-primary font-medium text-sm group-hover:text-brand-primary transition-colors line-clamp-2">
+                                                            {movie.name}
+                                                        </h3>
+                                                    </div>
+                                                </Link>
+                                            )
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="text-center py-12">
@@ -240,7 +249,9 @@ const ActorDetailPage: React.FC = () => {
                                 <div className="bg-surface rounded-lg shadow-2xl border border-brand-primary/20 p-3 w-72 scale-in">
                                     <div className="flex items-center justify-center space-x-2">
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-primary"></div>
-                                        <span className="text-secondary text-sm">Loading movie info...</span>
+                                        <span className="text-secondary text-sm">
+                                            Loading movie info...
+                                        </span>
                                     </div>
                                 </div>
                             </div>
