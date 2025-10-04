@@ -1,31 +1,30 @@
 'use client'
 
 import { useAuth } from '@/features/auth/hooks/auth.hook'
+import { getRedirectPathByRole } from '@/features/auth/utils/role.util'
 import api from '@/lib/api'
 import type { Movie as UIMovie } from '@/shared/data/mockMovies'
 import type { ApiListResponse, Movie as ApiMovie } from '@/shared/types/movies.types'
-import { useEffect, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useRef, useState } from 'react'
 import HeroBanner from './HeroBanner'
 import MovieSlider from './MovieSlider'
 
 const HomeSection = () => {
-    const { isAuthenticated, user } = useAuth()
+    const { isAuthenticated, account } = useAuth()
+    const navigate = useNavigate()
+    const hasNavigated = useRef(false)
     const [movies, setMovies] = useState<UIMovie[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-
     // Auto redirect by role
     useEffect(() => {
-        if (isAuthenticated && user) {
-            if (user.role?.roleName === 'admin') {
-                window.location.href = '/admin'
-            } else if (user.role?.roleName === 'employee') {
-                window.location.href = '/employee'
-            } else if (user.role?.roleName === 'user') {
-                window.location.href = '/customer'
-            }
+        if (isAuthenticated && account && !hasNavigated.current) {
+            hasNavigated.current = true
+            const href = getRedirectPathByRole(account)
+            navigate({ to: href })
         }
-    }, [isAuthenticated, user])
+    }, [isAuthenticated, account, navigate])
 
     const mapApiMovieToUi = (m: ApiMovie): UIMovie => ({
         id: m.id,

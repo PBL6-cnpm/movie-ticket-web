@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { axios } from '../../../shared/api/api-client'
+import { apiClient } from '../../../shared/api/api-client'
 import type { ActorDetailResponse } from '../../../shared/types/movies.types'
 
 export const useActorDetail = (actorId: string | null) => {
@@ -7,7 +7,7 @@ export const useActorDetail = (actorId: string | null) => {
         queryKey: ['actor', actorId],
         queryFn: async () => {
             if (!actorId) return null
-            const response = await axios.get<ActorDetailResponse>(`/actors/${actorId}`)
+            const response = await apiClient.get<ActorDetailResponse>(`/actors/${actorId}`)
             console.log('Actor API Response:', response.data)
             return response.data.data
         },

@@ -6,7 +6,6 @@ import { Input } from '@/shared/components/ui/input'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useAuth } from '../hooks/auth.hook'
-import { getRedirectPathByRole } from '../utils/auth.utils'
 
 const LoginSection = () => {
     const [email, setEmail] = useState('')
@@ -20,10 +19,12 @@ const LoginSection = () => {
         if (result.success) {
             console.log('Login successful!')
 
-            // Redirect dựa trên role của user
-            if ('user' in result && result.user) {
-                const redirectPath = getRedirectPathByRole(result.user.role_id)
-                navigate({ to: redirectPath })
+            // Redirect based on first role
+            if (result.data) {
+                if (result.data.branchId === null) {
+                    navigate({ to: '/' })
+                    return
+                }
             }
         }
     }
@@ -43,7 +44,7 @@ const LoginSection = () => {
 
             <Card className="backdrop-blur-lg bg-white/10 border border-white/20 shadow-2xl">
                 <CardHeader className="space-y-1 pb-6">
-                    <h2 className="text-2xl font-bold text-center text-white">Sign In</h2>
+                    <h2 className="text-2xl font-bold text-center text-white">Login</h2>
                     <p className="text-center text-gray-300 text-sm">
                         Enter your credentials to access your account
                     </p>
@@ -195,7 +196,7 @@ const LoginSection = () => {
                                     Signing in...
                                 </div>
                             ) : (
-                                'Sign In'
+                                'Login'
                             )}
                         </Button>
                     </form>

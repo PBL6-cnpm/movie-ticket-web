@@ -117,40 +117,46 @@ const ActorModal: React.FC<ActorModalProps> = ({ actorId, isOpen, onClose }) => 
 
                                 {actor.movies && actor.movies.length > 0 ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        {actor.movies.map((movie) => (
-                                            <Link
-                                                key={movie.id}
-                                                to="/movie/$movieId"
-                                                params={{ movieId: movie.id }}
-                                                onClick={onClose}
-                                                className="group"
-                                            >
-                                                <div className="flex gap-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-2xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
-                                                    <img
-                                                        src={
-                                                            movie.poster ||
-                                                            'https://via.placeholder.com/80x112/648ddb/ffffff?text=Movie'
-                                                        }
-                                                        alt={movie.name}
-                                                        className="w-20 h-28 object-cover rounded-xl shadow-md bg-brand-secondary"
-                                                        onError={(e) => {
-                                                            const target =
-                                                                e.target as HTMLImageElement
-                                                            target.src =
+                                        {actor.movies.map(
+                                            (movie: {
+                                                id: string
+                                                name: string
+                                                poster: string
+                                            }) => (
+                                                <Link
+                                                    key={movie.id}
+                                                    to="/movie/$movieId"
+                                                    params={{ movieId: movie.id }}
+                                                    onClick={onClose}
+                                                    className="group"
+                                                >
+                                                    <div className="flex gap-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-2xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
+                                                        <img
+                                                            src={
+                                                                movie.poster ||
                                                                 'https://via.placeholder.com/80x112/648ddb/ffffff?text=Movie'
-                                                        }}
-                                                    />
-                                                    <div className="flex-1">
-                                                        <h5 className="font-semibold text-white text-base line-clamp-2 group-hover:text-brand-primary transition-colors">
-                                                            {movie.name}
-                                                        </h5>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            Click to view details
-                                                        </p>
+                                                            }
+                                                            alt={movie.name}
+                                                            className="w-20 h-28 object-cover rounded-xl shadow-md bg-brand-secondary"
+                                                            onError={(e) => {
+                                                                const target =
+                                                                    e.target as HTMLImageElement
+                                                                target.src =
+                                                                    'https://via.placeholder.com/80x112/648ddb/ffffff?text=Movie'
+                                                            }}
+                                                        />
+                                                        <div className="flex-1">
+                                                            <h5 className="font-semibold text-white text-base line-clamp-2 group-hover:text-brand-primary transition-colors">
+                                                                {movie.name}
+                                                            </h5>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                Click to view details
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </Link>
-                                        ))}
+                                                </Link>
+                                            )
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="text-center py-10 text-gray-500">

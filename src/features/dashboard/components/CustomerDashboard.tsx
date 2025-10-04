@@ -5,13 +5,13 @@ import Button from '@/shared/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 
 const CustomerDashboard = () => {
-    const { user } = useAuth()
+    const { account } = useAuth()
 
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="text-center">
-                <h1 className="text-4xl font-bold text-green-600 mb-4">Hello Customer! </h1>
-                <p className="text-xl text-gray-600">Welcome back, {user?.name}</p>
+                <h1 className="text-4xl font-bold text-green-600 mb-4">Hello Customer! 🎬</h1>
+                <p className="text-xl text-gray-600">Welcome back, {account?.fullName}</p>
             </div>
 
             <Card>
@@ -61,11 +61,11 @@ const CustomerDashboard = () => {
                     <div className="text-center text-gray-600">
                         <p className="mb-2">Enjoy your movie experience with us!</p>
                         <div className="flex justify-center gap-4 text-sm">
-                            <span>Account: {user?.account_id}</span>
+                            <span>Account: {account?.id}</span>
                             <span>•</span>
-                            <span>Branch: {user?.branch_id}</span>
+                            <span>Branch: {account?.branchId}</span>
                             <span>•</span>
-                            <span>Coins: {user?.coin}</span>
+                            <span>Coins: {account?.coin}</span>
                         </div>
                     </div>
                 </CardContent>
