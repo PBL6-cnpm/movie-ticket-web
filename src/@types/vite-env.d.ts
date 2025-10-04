@@ -3,6 +3,7 @@
 interface ImportMeta {
     env: {
         VITE_BASE_URL: string
-        VITE_API_TOKEN: string
+        VITE_SERVER_URL?: string
+        VITE_API_TOKEN?: string
     }
 }

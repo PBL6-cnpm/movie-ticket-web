@@ -10,7 +10,7 @@ const CustomerDashboard = () => {
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="text-center">
-                <h1 className="text-4xl font-bold text-green-600 mb-4">Hello Customer! 🎬</h1>
+                <h1 className="text-4xl font-bold text-green-600 mb-4">Hello Customer! </h1>
                 <p className="text-xl text-gray-600">Welcome back, {user?.name}</p>
             </div>
 
@@ -24,7 +24,7 @@ const CustomerDashboard = () => {
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <Button className="h-20 bg-green-600 hover:bg-green-700 flex flex-col items-center justify-center">
-                            <span className="text-xl mb-1">🎬</span>
+                            <span className="text-xl mb-1"></span>
                             <span className="text-sm">Browse Movies</span>
                         </Button>
 

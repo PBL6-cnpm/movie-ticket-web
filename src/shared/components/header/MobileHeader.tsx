@@ -1,5 +1,6 @@
 import { useAuth } from '../../../features/auth/hooks/auth.hook'
 import type { User } from '../../../features/auth/types/auth.type'
+import SearchBar from './SearchBar'
 
 interface MobileHeaderProps {
     user: User | null
@@ -19,6 +20,15 @@ export default function MobileHeader({ user, isAuthenticated, isOpen }: MobileHe
     return (
         <div className="md:hidden border-t border-gray-200">
             <div className="px-2 pt-2 pb-3 space-y-1">
+                {/* Mobile Search Bar */}
+                <div className="px-3 py-2">
+                    <SearchBar
+                        onSearch={(query) => console.log('Mobile search query:', query)}
+                        placeholder="Search movies, theaters..."
+                        className="w-full"
+                    />
+                </div>
+
                 <a
                     href="/"
                     className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"

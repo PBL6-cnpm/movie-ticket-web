@@ -4,7 +4,7 @@ interface NavigationProps {
 
 export default function Navigation({ isAuthenticated }: NavigationProps) {
     return (
-        <nav className="hidden md:flex items-center space-x-8">
+        <nav className="hidden md:flex items-center space-x-16">
             <a
                 href="/"
                 className="text-primary hover:text-brand-secondary font-medium transition-colors"
