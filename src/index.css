@@ -11,6 +11,10 @@
 }
 
 /* Apply global styles */
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     background-color: var(--brand-background);
     color: var(--brand-text);
@@ -173,15 +177,23 @@ div {
 
 ::-webkit-scrollbar-track {
     background: var(--brand-surface);
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: var(--brand-secondary);
     border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--brand-primary);
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--brand-secondary) var(--brand-surface);
 }
 
 /* Hide scrollbar utility */

@@ -9,7 +9,7 @@ const desktopImages = [
 const mobileImages = [
     '/assets/banner/mobile/avatar-2-750_1758269621660.jpg',
     '/assets/banner/mobile/imax-treasure-hunt-3_1758703877923.jpg',
-    '/assets/banner/mobile/tu-chien-tren-khong-750_1757996322015.jpg'  
+    '/assets/banner/mobile/tu-chien-tren-khong-750_1757996322015.jpg'
 ]
 
 const HeroBanner: React.FC = () => {
