@@ -1,5 +1,5 @@
 import { Link, useParams } from '@tanstack/react-router'
-import { Calendar, Clock, MapPin, Play, Star, Ticket, User, Users } from 'lucide-react'
+import { Calendar, Clock, MapPin, Play, Star, Ticket, User, Users, X } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
@@ -48,6 +48,17 @@ const MovieDetailPage: React.FC = () => {
         if (showTrailer) {
             document.addEventListener('keydown', handleEscKey)
             document.body.style.overflow = 'hidden'
+            document.body.style.position = 'fixed'
+            document.body.style.width = '100%'
+            document.body.style.top = `-${window.scrollY}px`
+        } else {
+            const scrollY = document.body.style.top
+            document.body.style.position = ''
+            document.body.style.top = ''
+            document.body.style.width = ''
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1)
+            }
         }
 
         return () => {
@@ -346,16 +357,34 @@ const MovieDetailPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Trailer Modal - Fixed to viewport */}
+                {/* Trailer Modal - FIXED */}
                 {showTrailer && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
-                        style={{ position: 'fixed' }}
+                        className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md"
                         onClick={() => setShowTrailer(false)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100vw',
+                            height: '100vh'
+                        }}
                     >
+                        <button
+                            onClick={() => setShowTrailer(false)}
+                            className="absolute top-4 right-4 z-[10000] w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                            style={{ position: 'fixed' }}
+                        >
+                            <X className="w-6 h-6 text-white" />
+                        </button>
+
                         <div
-                            className="relative w-full max-w-6xl bg-[#1a1f3a] rounded-2xl overflow-hidden shadow-2xl"
+                            className="relative w-full max-w-6xl bg-[#1a1f3a] rounded-2xl overflow-hidden shadow-2xl mx-4"
                             onClick={(e) => e.stopPropagation()}
+                            style={{ maxHeight: '90vh' }}
                         >
                             <div className="relative" style={{ paddingBottom: '56.25%' }}>
                                 <iframe
