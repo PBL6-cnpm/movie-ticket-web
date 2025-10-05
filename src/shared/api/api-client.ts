@@ -1,11 +1,6 @@
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 import type { ApiResponse } from '@/features/auth/types/base-response.type'
-import Axios, {
-    AxiosError,
-    HttpStatusCode,
-    type AxiosResponse,
-    type InternalAxiosRequestConfig
-} from 'axios'
+import Axios, { AxiosError, HttpStatusCode, type InternalAxiosRequestConfig } from 'axios'
 
 export const apiClient = Axios.create({
     baseURL: import.meta.env.VITE_BASE_URL,
@@ -28,16 +23,6 @@ const authRequestInterceptor = (config: InternalAxiosRequestConfig) => {
     }
 
     return config
-}
-
-const responseInterceptor = (response: AxiosResponse) => {
-    const backendResponse = response.data
-
-    if (backendResponse && backendResponse.success) {
-        return Promise.resolve(backendResponse.data)
-    } else {
-        return Promise.reject(backendResponse)
-    }
 }
 
 const errorInterceptor = async (error: AxiosError) => {
@@ -111,4 +96,8 @@ const errorInterceptor = async (error: AxiosError) => {
 
 apiClient.interceptors.request.use(authRequestInterceptor)
 
-apiClient.interceptors.response.use(responseInterceptor, errorInterceptor)
+// Temporarily disable response interceptor for debugging
+// apiClient.interceptors.response.use(responseInterceptor, errorInterceptor)
+apiClient.interceptors.response.use((response) => {
+    return response
+}, errorInterceptor)

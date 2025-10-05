@@ -57,14 +57,16 @@ const SimilarMoviesSection: React.FC<SimilarMoviesSectionProps> = ({ movies }) =
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-1 mt-3">
-                                    {movie.genres.slice(0, 2).map((genre) => (
-                                        <span
-                                            key={genre.id}
-                                            className="px-2 py-1 bg-brand-secondary/20 text-brand-secondary rounded text-xs font-medium"
-                                        >
-                                            {genre.name}
-                                        </span>
-                                    ))}
+                                    {movie.genres
+                                        .slice(0, 2)
+                                        .map((genre: { id: string; name: string }) => (
+                                            <span
+                                                key={genre.id}
+                                                className="px-2 py-1 bg-brand-secondary/20 text-brand-secondary rounded text-xs font-medium"
+                                            >
+                                                {genre.name}
+                                            </span>
+                                        ))}
                                     {movie.genres.length > 2 && (
                                         <span className="px-2 py-1 bg-brand-secondary/20 text-brand-secondary rounded text-xs font-medium">
                                             +{movie.genres.length - 2}

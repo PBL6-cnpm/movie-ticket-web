@@ -9,9 +9,10 @@ interface MovieSliderProps {
 }
 
 const MovieSlider: React.FC<MovieSliderProps> = ({ title, movies, cardSize = 'medium' }) => {
+    console.log(`MovieSlider ${title}:`, { movies: movies.length, cardSize })
+
     const sliderRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
-
     const [canScrollRight, setCanScrollRight] = useState(true)
 
     const checkScrollButtons = () => {

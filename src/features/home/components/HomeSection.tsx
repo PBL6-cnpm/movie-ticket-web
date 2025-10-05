@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/features/auth/hooks/auth.hook'
 import { getRedirectPathByRole } from '@/features/auth/utils/role.util'
-import api from '@/lib/api'
+import { apiClient } from '@/shared/api/api-client'
 import type { Movie as UIMovie } from '@/shared/data/mockMovies'
 import type { ApiListResponse, Movie as ApiMovie } from '@/shared/types/movies.types'
 import { useNavigate } from '@tanstack/react-router'
@@ -34,7 +34,7 @@ const HomeSection = () => {
         banner: m.poster,
         releaseDate: m.releaseDate,
         duration: m.duration,
-        genres: m.genres.map((g) => g.name),
+        genres: m.genres.map((g: { id: string; name: string }) => g.name),
         rating: 0,
         status: new Date(m.releaseDate) <= new Date() ? 'now-showing' : 'coming-soon',
         trailer: m.trailer,
@@ -50,13 +50,16 @@ const HomeSection = () => {
             setLoading(true)
             setError('')
             try {
-                const res = await api.get<ApiListResponse<ApiMovie>>('/movies', {
+                const res = await apiClient.get<ApiListResponse<ApiMovie>>('/movies', {
                     params: { limit: 10, offset: 0 }
                 })
+                console.log('Home movies API response:', res.data)
                 if (res.data && res.data.data?.items) {
                     const mapped = res.data.data.items.map(mapApiMovieToUi)
+                    console.log('Mapped movies for slider:', mapped)
                     setMovies(mapped)
                 } else {
+                    console.error('Invalid movies response structure:', res.data)
                     setError('Không thể tải dữ liệu phim!')
                 }
             } catch (err) {

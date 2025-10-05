@@ -10,8 +10,16 @@ const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams({ from: '/movie/$movieId' })
     const { data: movie, isLoading: movieLoading, error: movieError } = useMovieDetail(movieId)
     const [showTrailer, setShowTrailer] = useState(false)
-    const genres = movie?.genres.map((g) => g.name) || []
+    const genres = movie?.genres.map((g: { id: string; name: string }) => g.name) || []
     const { data: similarMovies, isLoading: similarLoading } = useSimilarMovies(genres, movieId)
+
+    // Debug logging
+    console.log('MovieDetailPage Debug:', {
+        movieId,
+        movie,
+        movieLoading,
+        movieError: movieError?.message || movieError
+    })
 
     const formatDuration = (minutes: number) => {
         const hours = Math.floor(minutes / 60)
@@ -61,14 +69,34 @@ const MovieDetailPage: React.FC = () => {
             </PageTransition>
         )
 
-    if (movieError || !movie)
+    if (movieError || (!movieLoading && !movie))
         return (
             <PageTransition>
                 <div className="min-h-screen bg-brand flex items-center justify-center text-white">
-                    Movie not found.
+                    <div className="text-center">
+                        <h2 className="text-2xl font-bold mb-4">Movie not found</h2>
+                        <p className="text-secondary mb-4">
+                            {movieError?.message || 'The requested movie could not be loaded.'}
+                        </p>
+                        <p className="text-sm text-secondary">Movie ID: {movieId}</p>
+                        <Link to="/" className="btn-primary mt-4 inline-block">
+                            Back to Home
+                        </Link>
+                    </div>
                 </div>
             </PageTransition>
         )
+
+    // Type guard - ensure movie exists before rendering
+    if (!movie) {
+        return (
+            <PageTransition>
+                <div className="min-h-screen bg-brand flex items-center justify-center text-white">
+                    Loading...
+                </div>
+            </PageTransition>
+        )
+    }
 
     return (
         <PageTransition>
@@ -124,7 +152,7 @@ const MovieDetailPage: React.FC = () => {
                                         Genres
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {movie.genres.map((genre) => (
+                                        {movie.genres.map((genre: { id: string; name: string }) => (
                                             <span
                                                 key={genre.id}
                                                 className="px-3 py-1 bg-brand-secondary text-white rounded-full text-xs font-medium shadow-sm"
@@ -179,23 +207,25 @@ const MovieDetailPage: React.FC = () => {
                             Cast
                         </h3>
                         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-                            {movie.actors.map((actor) => (
-                                <Link
-                                    key={actor.id}
-                                    to="/actor/$actorId"
-                                    params={{ actorId: actor.id }}
-                                    className="text-center block group"
-                                >
-                                    <img
-                                        src={actor.picture || '/default-avatar.jpg'}
-                                        alt={actor.name}
-                                        className="w-16 h-16 rounded-full object-cover mx-auto shadow-md group-hover:scale-105 transition-transform border-2 border-transparent group-hover:border-brand-primary"
-                                    />
-                                    <p className="text-xs font-medium text-primary mt-2 group-hover:text-brand-primary">
-                                        {actor.name}
-                                    </p>
-                                </Link>
-                            ))}
+                            {movie.actors.map(
+                                (actor: { id: string; name: string; picture: string }) => (
+                                    <Link
+                                        key={actor.id}
+                                        to="/actor/$actorId"
+                                        params={{ actorId: actor.id }}
+                                        className="text-center block group"
+                                    >
+                                        <img
+                                            src={actor.picture || '/default-avatar.jpg'}
+                                            alt={actor.name}
+                                            className="w-16 h-16 rounded-full object-cover mx-auto shadow-md group-hover:scale-105 transition-transform border-2 border-transparent group-hover:border-brand-primary"
+                                        />
+                                        <p className="text-xs font-medium text-primary mt-2 group-hover:text-brand-primary">
+                                            {actor.name}
+                                        </p>
+                                    </Link>
+                                )
+                            )}
                         </div>
                     </div>
 
