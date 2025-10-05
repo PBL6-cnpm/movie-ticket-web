@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router'
+
 interface NavigationProps {
     isAuthenticated: boolean
 }
@@ -5,18 +7,18 @@ interface NavigationProps {
 export default function Navigation({ isAuthenticated }: NavigationProps) {
     return (
         <nav className="hidden md:flex items-center space-x-16">
-            <a
-                href="/"
+            <Link
+                to="/"
                 className="text-primary hover:text-brand-secondary font-medium transition-colors"
             >
                 Home
-            </a>
-            <a
-                href="#"
+            </Link>
+            <Link
+                to="/movies"
                 className="text-primary hover:text-brand-secondary font-medium transition-colors"
             >
                 Movies
-            </a>
+            </Link>
             <a
                 href="#"
                 className="text-primary hover:text-brand-secondary font-medium transition-colors"

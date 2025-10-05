@@ -6,6 +6,7 @@ import { verifyEmailRoute } from './features/auth/routes/VerifyEmail'
 import { homeRoute } from './features/home/routes/HomeRoute'
 import { actorDetailRoute } from './features/movies/routes/ActorDetailRoute'
 import { movieDetailRoute } from './features/movies/routes/MovieDetailRoute'
+import { moviesRoute } from './features/movies/routes/MoviesRoute'
 import { rootRoute } from './shared/routes/__root'
 
 // Create the route tree
@@ -16,6 +17,7 @@ export const routeTree = rootRoute.addChildren([
     forgotPasswordRoute,
     emailVerificationRoute,
     verifyEmailRoute,
+    moviesRoute,
     movieDetailRoute,
     actorDetailRoute
 ])

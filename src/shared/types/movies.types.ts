@@ -32,6 +32,7 @@ export interface Movie {
     actors: Actor[]
     createdAt: string
     updatedAt: string
+    status: 'now-showing' | 'coming-soon' | 'ended'
 }
 
 export interface ApiListMeta {
