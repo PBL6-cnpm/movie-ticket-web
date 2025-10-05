@@ -46,19 +46,7 @@ export default function DesktopHeader({
                 ) : (
                     <AuthButtons />
                 )}
-            </div>
-            {/* User Section */}
-            <div className="flex items-center gap-4">
-                {isAuthenticated && account ? (
-                    <>
-                        <UserInfo account={account} />
-                        <DashboardLinks account={account} />
-                    </>
-                ) : (
-                    <>
-                        <AuthButtons />
-                    </>
-                )}{' '}
+
                 <button
                     onClick={onMobileMenuToggle}
                     className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"

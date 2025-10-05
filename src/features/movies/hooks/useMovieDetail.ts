@@ -1,4 +1,4 @@
-import type { Movie, MovieDetailResponse } from '@/shared/types/movies.types'
+import type { Movie } from '@/shared/types/movies.types'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../../../shared/api/api-client'
 
@@ -6,8 +6,36 @@ export const useMovieDetail = (movieId: string) => {
     return useQuery({
         queryKey: ['movie', 'detail', movieId],
         queryFn: async () => {
-            const response = await apiClient.get<MovieDetailResponse>(`/movies/${movieId}`)
-            return response.data.data
+            console.log('useMovieDetail API call:', `/movies/${movieId}`)
+            try {
+                const response = await apiClient.get(`/movies/${movieId}`)
+                console.log('useMovieDetail full response:', response)
+                console.log('useMovieDetail response.data:', response.data)
+                console.log('useMovieDetail response.status:', response.status)
+
+                // Check if response structure is correct
+                if (!response.data) {
+                    throw new Error('No data in response')
+                }
+
+                // Handle different response structures
+                if (response.data.data) {
+                    console.log('Using response.data.data:', response.data.data)
+                    return response.data.data
+                }
+
+                // Maybe the response is direct movie data
+                if (response.data.id) {
+                    console.log('Using direct response.data:', response.data)
+                    return response.data
+                }
+
+                console.error('Invalid response structure:', response.data)
+                throw new Error('Invalid response structure')
+            } catch (error) {
+                console.error('useMovieDetail error:', error)
+                throw error
+            }
         },
         enabled: !!movieId,
         staleTime: 5 * 60 * 1000 // 5 minutes

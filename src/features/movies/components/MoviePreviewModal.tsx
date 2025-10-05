@@ -109,7 +109,7 @@ const MoviePreviewModal: React.FC<MoviePreviewModalProps> = ({ movie, isVisible,
 
                         {/* Genres */}
                         <div className="flex flex-wrap gap-1">
-                            {movie.genres.slice(0, 2).map((genre) => (
+                            {movie.genres.slice(0, 2).map((genre: { id: string; name: string }) => (
                                 <span
                                     key={genre.id}
                                     className="px-1.5 py-0.5 bg-brand-secondary text-white rounded-full text-xs font-medium"

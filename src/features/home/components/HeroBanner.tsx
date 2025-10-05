@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react'
 
 const desktopImages = [
-    '/src/assets/banner/desktop/avatar-2-2480_1758269622108.jpg',
-    '/src/assets/banner/desktop/imax-treasure-hunt--s4_1758703859745.jpg',
-    '/src/assets/banner/desktop/tu-chien-tren-khong-2048_1757996321581.jpg'
+    '/assets/banner/desktop/avatar-2-2480_1758269622108.jpg',
+    '/assets/banner/desktop/imax-treasure-hunt--s4_1758703859745.jpg',
+    '/assets/banner/desktop/tu-chien-tren-khong-2048_1757996321581.jpg'
 ]
 
 const mobileImages = [
-    '/src/assets/banner/mobile/avatar-2-750_1758269621660.jpg',
-    '/src/assets/banner/mobile/imax-treasure-hunt-3_1758703877923.jpg',
-    '/src/assets/banner/mobile/tu-chien-tren-khong-750_1757996322015.jpg'
+    '/assets/banner/mobile/avatar-2-750_1758269621660.jpg',
+    '/assets/banner/mobile/imax-treasure-hunt-3_1758703877923.jpg',
+    '/assets/banner/mobile/tu-chien-tren-khong-750_1757996322015.jpg'  
 ]
 
 const HeroBanner: React.FC = () => {
