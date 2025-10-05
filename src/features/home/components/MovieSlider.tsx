@@ -3,14 +3,11 @@ import React, { useRef, useState } from 'react'
 import MovieCard from './MovieCard'
 
 interface MovieSliderProps {
-    title: string
     movies: Movie[]
     cardSize?: 'small' | 'medium' | 'large'
 }
 
-const MovieSlider: React.FC<MovieSliderProps> = ({ title, movies, cardSize = 'medium' }) => {
-    console.log(`MovieSlider ${title}:`, { movies: movies.length, cardSize })
-
+const MovieSlider: React.FC<MovieSliderProps> = ({ movies, cardSize = 'medium' }) => {
     const sliderRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(true)
@@ -25,93 +22,88 @@ const MovieSlider: React.FC<MovieSliderProps> = ({ title, movies, cardSize = 'me
 
     const scrollLeft = () => {
         if (sliderRef.current) {
-            sliderRef.current.scrollBy({ left: -300, behavior: 'smooth' })
+            sliderRef.current.scrollBy({ left: -400, behavior: 'smooth' })
             setTimeout(checkScrollButtons, 300)
         }
     }
 
     const scrollRight = () => {
         if (sliderRef.current) {
-            sliderRef.current.scrollBy({ left: 300, behavior: 'smooth' })
+            sliderRef.current.scrollBy({ left: 400, behavior: 'smooth' })
             setTimeout(checkScrollButtons, 300)
         }
     }
 
     return (
-        <section className="py-10">
-            <div className="container-custom">
-                {/* Section Header - modern style */}
-                <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-3xl font-extrabold text-brand-primary tracking-tight whitespace-nowrap drop-shadow-lg">
-                        {title}
-                    </h2>
-                    <div className="flex space-x-3">
-                        <button
-                            onClick={scrollLeft}
-                            disabled={!canScrollLeft}
-                            className={`p-3 rounded-full border-2 transition-all duration-200 shadow-md ${
-                                canScrollLeft
-                                    ? 'bg-surface border-brand-primary hover:bg-brand-primary hover:text-white text-brand-primary'
-                                    : 'bg-brand border-surface text-secondary cursor-not-allowed opacity-50'
-                            }`}
-                        >
-                            <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 19l-7-7 7-7"
-                                />
-                            </svg>
-                        </button>
-                        <button
-                            onClick={scrollRight}
-                            disabled={!canScrollRight}
-                            className={`p-3 rounded-full border-2 transition-all duration-200 shadow-md ${
-                                canScrollRight
-                                    ? 'bg-surface border-brand-primary hover:bg-brand-primary hover:text-white text-brand-primary'
-                                    : 'bg-brand border-surface text-secondary cursor-not-allowed opacity-50'
-                            }`}
-                        >
-                            <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 5l7 7-7 7"
-                                />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Movies Slider */}
-                <div className="relative">
-                    <div
-                        ref={sliderRef}
-                        className="flex space-x-4 overflow-x-auto scrollbar-hide pb-4"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                        onScroll={checkScrollButtons}
-                    >
-                        {movies.map((movie) => (
-                            <div key={movie.id} className="flex-shrink-0">
-                                <MovieCard movie={movie} size={cardSize} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
+        <div className="relative">
+            {/* Navigation Buttons */}
+            <div className="absolute -top-12 right-0 flex gap-2 z-10">
+                <button
+                    onClick={scrollLeft}
+                    disabled={!canScrollLeft}
+                    className={`w-10 h-10 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                        canScrollLeft
+                            ? 'bg-[#242b3d] border-[#fe7e32] hover:bg-[#fe7e32] text-[#fe7e32] hover:text-white shadow-lg hover:shadow-[#fe7e32]/30'
+                            : 'bg-[#1a2232] border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
+                    }`}
+                    aria-label="Scroll left"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 19l-7-7 7-7"
+                        />
+                    </svg>
+                </button>
+                <button
+                    onClick={scrollRight}
+                    disabled={!canScrollRight}
+                    className={`w-10 h-10 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                        canScrollRight
+                            ? 'bg-[#242b3d] border-[#648ddb] hover:bg-[#648ddb] text-[#648ddb] hover:text-white shadow-lg hover:shadow-[#648ddb]/30'
+                            : 'bg-[#1a2232] border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
+                    }`}
+                    aria-label="Scroll right"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                        />
+                    </svg>
+                </button>
             </div>
-        </section>
+
+            {/* Movies Slider */}
+            <div
+                ref={sliderRef}
+                className="flex gap-4 overflow-x-auto scrollbar-hide"
+                style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch'
+                }}
+                onScroll={checkScrollButtons}
+            >
+                {movies.map((movie) => (
+                    <div key={movie.id} className="flex-shrink-0">
+                        <MovieCard movie={movie} size={cardSize} />
+                    </div>
+                ))}
+            </div>
+
+            {/* Gradient Fade Effects */}
+            {canScrollLeft && (
+                <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#1a2232] to-transparent pointer-events-none z-10" />
+            )}
+            {canScrollRight && (
+                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#1a2232] to-transparent pointer-events-none z-10" />
+            )}
+        </div>
     )
 }
 
