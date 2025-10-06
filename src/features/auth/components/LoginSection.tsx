@@ -6,6 +6,8 @@ import { Input } from '@/shared/components/ui/input'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useAuth } from '../hooks/auth.hook'
+import type { Account } from '../types/account.type'
+import { getRedirectPathByRole } from '../utils/role.util'
 
 const LoginSection = () => {
     const [email, setEmail] = useState('')
@@ -19,12 +21,18 @@ const LoginSection = () => {
         if (result.success) {
             console.log('Login successful!')
 
-            // Redirect based on first role
-            if (result.data) {
-                if (result.data.branchId === null) {
-                    navigate({ to: '/' })
-                    return
-                }
+            if (typeof result.message === 'string') {
+                console.log('Result data:', result.data)
+                // Redirect đến trang verification email với email
+                navigate({
+                    to: '/email-verification',
+                    search: { email }
+                })
+                return
+            } else {
+                // If result.data is Account, redirect based on role
+                const href = getRedirectPathByRole(result.data as Account)
+                navigate({ to: href })
             }
         }
     }

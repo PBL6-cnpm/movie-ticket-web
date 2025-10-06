@@ -21,14 +21,13 @@
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true,
-        "baseUrl": ".",
         "paths": {
             "@/*": ["./src/*"],
             "@/lib": ["./src/lib/*"],
-            "@/app/*": ["src/app/*"],
-            "@/shared/*": ["src/shared/*"],
-            "@/pages/*": ["src/app/pages/*"],
-            "@/features/*": ["src/features/*"]
+            "@/app/*": ["./src/app/*"],
+            "@/shared/*": ["./src/shared/*"],
+            "@/pages/*": ["./src/app/pages/*"],
+            "@/features/*": ["./src/features/*"]
         }
     },
     "include": [
