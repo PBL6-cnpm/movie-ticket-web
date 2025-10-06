@@ -28,7 +28,7 @@ export const useAuth = () => {
 
     const handleLogin = async (
         credentials: LoginCredentials
-    ): Promise<AxiosSuccessResponse<Account> | AxiosErrorResponse> => {
+    ): Promise<AxiosSuccessResponse<Account | string> | AxiosErrorResponse> => {
         try {
             setLoading(true)
             clearError()
@@ -42,12 +42,22 @@ export const useAuth = () => {
             }
 
             // Call the actual API
-            const data = (await authApi.login(credentials.email, credentials.password))
+            const data = (await authApi.login(credentials.email, credentials.password)).data.data
+
+            console.log('Login API response:', data.message)
 
             console.log('Login successful:', data)
 
-            login(data.account, { accessToken: data.accessToken })
+            login(data.account, data.accessToken)
 
+            if (data.message) {
+                return {
+                    success: true,
+                    message: data.message,
+                    data: data.account
+                }
+            }
+            
             return {
                 success: true,
                 data: data.account
@@ -94,12 +104,12 @@ export const useAuth = () => {
             }
 
             // Call the actual API
-            const data = await authApi.register(
+            const data = (await authApi.register(
                 credentials.email,
                 credentials.password,
                 credentials.fullName,
                 credentials.confirmPassword
-            )
+            )).data.data
 
             return { success: true, data }
         } catch (error: unknown) {

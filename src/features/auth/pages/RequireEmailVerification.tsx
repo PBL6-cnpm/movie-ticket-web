@@ -60,7 +60,7 @@ const EmailVerificationSuccess = () => {
                         </div>
 
                         <h2 className="text-2xl font-bold text-center text-primary">
-                            Registration Successful!
+                            Check your email!
                         </h2>
                         <p className="text-center text-secondary text-sm">
                             {email ? (

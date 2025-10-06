@@ -5,7 +5,7 @@ import type { AuthState } from '../types/auth.type'
 
 interface AuthStore extends Omit<AuthState, 'user'> {
     account: Account | null
-    login: (account: Account, tokens: { accessToken: string; refreshToken?: string }) => void
+    login: (account: Account, accessToken: string) => void
     logout: () => void
     updateAccessToken: (accessToken: string) => void
     setLoading: (loading: boolean) => void
@@ -21,16 +21,25 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: false,
             error: null,
 
-            login: (account, tokens) => {
-                localStorage.setItem('accessToken', tokens.accessToken)
+            login: (account, accessToken) => {
+                if (!accessToken) {
+                    set({
+                        account,
+                        isAuthenticated: false,
+                        isLoading: false,
+                        error: null
+                    })
+                } else {
+                    localStorage.setItem('accessToken', accessToken)
 
-                // localStorage.setItem('refreshToken', tokens.refreshToken)
-                set({
-                    account,
-                    isAuthenticated: true,
-                    isLoading: false,
-                    error: null
-                })
+                    // localStorage.setItem('refreshToken', tokens.refreshToken)
+                    set({
+                        account,
+                        isAuthenticated: true,
+                        isLoading: false,
+                        error: null
+                    })
+                }
             },
 
             logout: () => {

@@ -25,6 +25,16 @@ const authRequestInterceptor = (config: InternalAxiosRequestConfig) => {
     return config
 }
 
+// const responseInterceptor = (response: AxiosResponse) => {
+//     const backendResponse = response.data
+
+//     if (backendResponse && backendResponse.success) {
+//         return Promise.resolve(backendResponse)
+//     } else {
+//         return Promise.reject(backendResponse)
+//     }
+// }
+
 const errorInterceptor = async (error: AxiosError) => {
     console.log('API Error Interceptor triggered:', error)
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }

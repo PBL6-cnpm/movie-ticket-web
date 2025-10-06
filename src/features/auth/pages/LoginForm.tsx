@@ -6,6 +6,8 @@ import { Input } from '@/shared/components/ui/input'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useAuth } from '../hooks/auth.hook'
+import { getRedirectPathByRole } from '../utils/role.util'
+import type { Account } from '../types/account.type'
 
 const LoginForm = () => {
     const [email, setEmail] = useState('')
@@ -16,10 +18,23 @@ const LoginForm = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const result = await login({ email, password })
-        if (result?.success) {
-            console.log('Login successful!')
-            navigate({ to: '/' })
-        }
+        if (result.success) {
+                    console.log('Login successful!')
+        
+                    if (typeof result.message === 'string') {
+                        console.log('Result data:', result.data)
+                        // Redirect đến trang verification email với email
+                        navigate({
+                            to: '/email-verification',
+                            search: { email }
+                        })
+                        return
+                    } else {
+                        // If result.data is Account, redirect based on role
+                        const href = getRedirectPathByRole(result.data as Account)
+                        navigate({ to: href })
+                    }
+                }
     }
 
     return (

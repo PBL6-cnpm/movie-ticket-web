@@ -1,5 +1,3 @@
-import type { Account } from '@/features/auth/types/account.type'
-import type { LoginApiResponse } from '@/features/auth/types/auth.type'
 import { apiClient } from './api-client'
 
 const BASE_URL = '/auth'
@@ -9,7 +7,7 @@ export const register = async (
     password: string,
     fullName: string,
     confirmPassword: string
-): Promise<Account> => {
+) => {
     const payload = {
         email,
         fullName,
@@ -22,7 +20,7 @@ export const register = async (
     })
 }
 
-export const login = async (email: string, password: string): Promise<LoginApiResponse> => {
+export const login = async (email: string, password: string) => {
     return apiClient.post(
         `${BASE_URL}/login`,
         { email, password },

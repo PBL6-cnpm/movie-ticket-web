@@ -33,6 +33,13 @@ export interface ResendVerificationEmailCredentials {
 
 // Responses
 export interface LoginApiResponse {
-    accessToken: string
-    account: Account
+    success: boolean;
+    statusCode: number;
+    message: string;
+    code: string;
+    data: {
+        account: Account;
+        accessToken: string;
+        message: string;
+    };
 }
