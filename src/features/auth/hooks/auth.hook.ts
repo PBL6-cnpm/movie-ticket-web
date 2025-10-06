@@ -12,6 +12,7 @@ import type {
     AxiosSuccessResponse
 } from '../types/base-response.type'
 import { validateEmail, validatePassword } from '../utils/auth.util'
+import type { CredentialResponse } from '@react-oauth/google'
 
 export const useAuth = () => {
     const {
@@ -65,6 +66,44 @@ export const useAuth = () => {
         } catch (error: unknown) {
             const apiError = error as ApiResponse<null>
             const errorMessage = apiError.message || 'Login failed'
+
+            console.log('Login error:', errorMessage)
+
+            setError('Login failed')
+
+            return {
+                success: false,
+                statusCode: apiError.statusCode,
+                message: errorMessage
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleSocialLogin = async (credentialResponse: CredentialResponse): Promise<AxiosSuccessResponse<Account | string> | AxiosErrorResponse> => {
+        try {
+            setLoading(true)
+            clearError()
+
+            // Call the actual API
+            const idToken = credentialResponse.credential;
+            if (!idToken) {
+                throw new Error('Google login failed: No token received');
+            }
+            const data = (await authApi.socialLogin(idToken)).data.data
+
+            console.log('Login successful:', data)
+
+            login(data.account, data.accessToken)
+
+            return {
+                success: true,
+                data: data.account
+            }
+        } catch (error: unknown) {
+            const apiError = error as ApiResponse<null>
+            const errorMessage = apiError.message || 'Social login failed'
 
             console.log('Login error:', errorMessage)
 
@@ -164,8 +203,27 @@ export const useAuth = () => {
         }
     }
 
-    const handleLogout = () => {
-        logout()
+    const handleLogout = async () => {
+        try {
+            setLoading(true)
+            clearError()
+            await authApi.logout()
+            logout()
+        } catch (error: unknown) {
+            const apiError = error as ApiResponse<null>
+            const errorMessage = apiError.message || 'Logout failed'
+
+            console.log('Logout error:', errorMessage)
+            setError('Logout failed')
+
+            return {
+                success: false,
+                statusCode: apiError.statusCode,
+                message: errorMessage
+            }
+        } finally {
+            setLoading(false)
+        }
     }
 
     return {
@@ -174,6 +232,7 @@ export const useAuth = () => {
         isAuthenticated,
         error,
         login: handleLogin,
+        socialLogin: handleSocialLogin,
         register: handleRegister,
         resendVerificationEmail: handleResendVerificationEmail,
         logout: handleLogout,

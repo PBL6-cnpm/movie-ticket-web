@@ -25,8 +25,8 @@ export default function UserInfo({ account }: UserInfoProps) {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const handleLogout = () => {
-        logout()
+    const handleLogout = async () => {
+        await logout()
         window.location.href = '/login'
     }
 
