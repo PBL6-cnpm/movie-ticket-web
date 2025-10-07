@@ -30,6 +30,25 @@ export const login = async (email: string, password: string) => {
     )
 }
 
+export const socialLogin = async (token: string) => {
+    return apiClient.post(
+        `${BASE_URL}/google/login`,
+        { token },
+        {
+            headers: { 'Content-Type': 'application/json' }
+        }
+    )
+}
+
+export const logout = async () => {
+    return apiClient.post(
+        `${BASE_URL}/logout`,
+        {
+            headers: { 'Content-Type': 'application/json' }
+        }
+    )
+}
+
 export const resendVerificationEmail = async (email: string) => {
     if (!email) return
 
