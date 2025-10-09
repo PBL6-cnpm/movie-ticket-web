@@ -3,18 +3,18 @@
 import Button from '@/shared/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/shared/components/ui/card'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-// import { useState } from 'react'
-// import { useAuth } from '../hooks/auth.hook'
+import { useState } from 'react'
+import toast, { Toaster } from 'react-hot-toast'
+import { useAuth } from '../hooks/auth.hook'
 
 const EmailVerificationSuccess = () => {
     const navigate = useNavigate()
     const { email } = useSearch({ from: '/email-verification' })
+    const [isResending, setIsResending] = useState(false)
 
-    // const [formData, setFormData] = useState({ email: email || '' })
-    // const { resendVerificationEmail } = useAuth()
+    const { resendVerificationEmail } = useAuth()
 
     const handleOpenGmail = () => {
-        // Mở Gmail trong tab mới
         window.open('https://mail.google.com/', '_blank')
     }
 
@@ -22,13 +22,23 @@ const EmailVerificationSuccess = () => {
         navigate({ to: '/login' })
     }
 
-    // const handleResendVerification = async (e: React.FormEvent) => {
-    //     e.preventDefault()
-    //     const result = await resendVerificationEmail(formData)
-    //     if (result.success) {
-    //         alert('Verification email resent! Please check your inbox.')
-    //     }
-    // }
+    const handleResendVerification = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault()
+        setIsResending(true)
+
+        try {
+            console.log('Resend result:')
+            const result = await resendVerificationEmail({ email })
+            if (result.success) {
+                toast.success('Verification email sent successfully!', { position: 'top-right' })
+            }
+        } catch (error) {
+            console.error('Failed to resend email:', error)
+            toast.error('Failed to send verification email. Please try again.', { position: 'top-right' })
+        } finally {
+            setIsResending(false)
+        }
+    }
 
     return (
         <div className="min-h-screen bg-brand flex items-center justify-center p-4">
@@ -77,41 +87,6 @@ const EmailVerificationSuccess = () => {
 
                     <CardContent className="space-y-6">
                         <div className="text-center space-y-4">
-                            {/* Email Icon */}
-                            {/* <div className="mx-auto w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center">
-                                <svg
-                                    className="w-10 h-10 text-blue-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                    />
-                                </svg>
-                            </div>
-
-                            <div className="space-y-2">
-                                <h3 className="text-lg font-semibold text-primary">
-                                    Verify Your Email Address
-                                </h3>
-                                <p className="text-secondary text-sm leading-relaxed">
-                                    We've sent a verification link to{' '}
-                                    {email ? (
-                                        <span className="text-brand-primary font-medium">
-                                            {email}
-                                        </span>
-                                    ) : (
-                                        'your email address'
-                                    )}
-                                    . Click the button below to open Gmail and find the verification
-                                    email.
-                                </p>
-                            </div> */}
-
                             <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4">
                                 <div className="flex items-start space-x-3">
                                     <svg
@@ -179,29 +154,42 @@ const EmailVerificationSuccess = () => {
                                 Go to Login Page
                             </Button>
 
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="w-full text-center py-2 text-sm text-secondary hover:text-primary transition-colors"
-                            >
-                                Didn't receive the email?
-                                <a
-                                    className="text-brand-primary hover:text-brand-secondary ml-1 font-medium cursor-pointer">
-                                    Resend verification
-                                </a>
-                            </button>
-
-                            {/* Demo button - Remove in production */}
-                            <button
-                                onClick={() =>
-                                    navigate({
-                                        to: '/verify-email',
-                                        search: { email: email || 'demo@example.com' }
-                                    })
-                                }
-                                className="w-full text-center py-2 text-xs text-gray-400 hover:text-gray-300 transition-colors border-t border-gray-600 mt-4 pt-4"
-                            >
-                                🔧 Demo: Simulate Email Verified
-                            </button>
+                            <div className="w-full text-center py-2 text-sm text-secondary">
+                                Didn't receive the email?{' '}
+                                <button
+                                    onClick={handleResendVerification}
+                                    disabled={isResending}
+                                    className="text-brand-primary hover:text-brand-secondary ml-1 font-medium cursor-pointer bg-transparent border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isResending ? (
+                                        <span className="inline-flex items-center">
+                                            <svg
+                                                className="animate-spin -ml-1 mr-1 h-3 w-3 text-brand-primary"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    className="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    strokeWidth="4"
+                                                ></circle>
+                                                <path
+                                                    className="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                ></path>
+                                            </svg>
+                                            Sending...
+                                        </span>
+                                    ) : (
+                                        'Resend verification'
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Additional Info */}
@@ -228,6 +216,9 @@ const EmailVerificationSuccess = () => {
                     </p>
                 </div>
             </div>
+
+            {/* React Hot Toast Container */}
+            <Toaster />
         </div>
     )
 }
