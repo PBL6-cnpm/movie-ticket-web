@@ -27,19 +27,19 @@ export interface RegisterCredentials {
     branch_id?: string
 }
 
-export interface ResendVerificationEmailCredentials {
+export interface RequestEmailCredential {
     email: string
 }
 
 // Responses
 export interface LoginApiResponse {
-    success: boolean;
-    statusCode: number;
-    message: string;
-    code: string;
+    success: boolean
+    statusCode: number
+    message: string
+    code: string
     data: {
-        account: Account;
-        accessToken: string;
-        message: string;
-    };
+        account: Account
+        accessToken: string
+        message: string
+    }
 }

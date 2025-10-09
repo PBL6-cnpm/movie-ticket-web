@@ -58,3 +58,14 @@ export const resendVerificationEmail = async (email: string) => {
         headers: { 'Content-Type': 'application/json' }
     })
 }
+
+
+export const forgotPassword = async (email: string) => {
+    if (!email) return
+
+    const payload = { email }
+
+    return apiClient.post(`${BASE_URL}/forgot-password`, payload, {
+        headers: { 'Content-Type': 'application/json' }
+    })
+}
