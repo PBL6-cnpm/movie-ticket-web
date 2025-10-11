@@ -1,18 +1,6 @@
 import { Calendar, CheckCircle2, ChevronDown, Clock, Film, MapPin, Sparkles } from 'lucide-react'
-import React, { useState } from 'react'
-
-interface Cinema {
-    id: string
-    name: string
-    location: string
-}
-
-interface ShowTime {
-    id: string
-    time: string
-    type: '2D' | '3D' | 'IMAX'
-    price: number
-}
+import React, { useMemo, useState } from 'react'
+import { useBranches, useBranchMovies, useMovieShowTimes } from '../hooks/useBookingApi'
 
 interface QuickBookingProps {
     movies: Array<{
@@ -24,7 +12,7 @@ interface QuickBookingProps {
     }>
 }
 
-const QuickBooking: React.FC<QuickBookingProps> = ({ movies = [] }) => {
+const QuickBooking: React.FC<QuickBookingProps> = () => {
     const [selectedCinema, setSelectedCinema] = useState<string>('')
     const [selectedMovie, setSelectedMovie] = useState<string>('')
     const [selectedDate, setSelectedDate] = useState<string>('')
@@ -32,59 +20,49 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ movies = [] }) => {
     const [isBooking, setIsBooking] = useState(false)
     const [focusedField, setFocusedField] = useState<string | null>(null)
 
-    // Mock data
-    const mockMovies =
-        movies.length > 0
-            ? movies
-            : [
-                  {
-                      id: '1',
-                      title: 'Avengers: Endgame',
-                      poster: '',
-                      duration: 181,
-                      ageRating: 'PG-13'
-                  },
-                  {
-                      id: '2',
-                      title: 'Spider-Man: No Way Home',
-                      poster: '',
-                      duration: 148,
-                      ageRating: 'PG-13'
-                  },
-                  { id: '3', title: 'The Batman', poster: '', duration: 176, ageRating: 'PG-13' }
-              ]
+    // API calls
+    const { data: branches = [], isLoading: branchesLoading, error: branchesError } = useBranches()
+    const { data: branchMovies = [], isLoading: moviesLoading } = useBranchMovies(selectedCinema)
+    const { data: showTimeDays = [], isLoading: showTimesLoading } =
+        useMovieShowTimes(selectedMovie)
 
-    const cinemas: Cinema[] = [
-        { id: '1', name: 'CGV Vincom', location: 'Hanoi' },
-        { id: '2', name: 'CGV Aeon Mall', location: 'Hanoi' },
-        { id: '3', name: 'Lotte Cinema', location: 'Hanoi' },
-        { id: '4', name: 'BHD Star', location: 'Hanoi' }
-    ]
+    // Available dates from showtimes
+    const availableDates = useMemo(() => {
+        return showTimeDays.map((day) => ({
+            value: day.dayOfWeek.value.split('T')[0],
+            label: `${day.dayOfWeek.name}, ${new Date(day.dayOfWeek.value).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`
+        }))
+    }, [showTimeDays])
 
-    const showtimes: ShowTime[] = [
-        { id: '1', time: '09:00', type: '2D', price: 80000 },
-        { id: '2', time: '11:30', type: '2D', price: 90000 },
-        { id: '3', time: '14:00', type: '3D', price: 120000 },
-        { id: '4', time: '16:30', type: '2D', price: 90000 },
-        { id: '5', time: '19:00', type: 'IMAX', price: 150000 },
-        { id: '6', time: '21:30', type: '2D', price: 90000 }
-    ]
+    // Available showtimes for selected date
+    const availableShowtimes = useMemo(() => {
+        if (!selectedDate) return []
 
-    const getNext7Days = () => {
-        const days = []
-        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-        for (let i = 0; i < 7; i++) {
-            const date = new Date()
-            date.setDate(date.getDate() + i)
-            days.push({
-                value: date.toISOString().split('T')[0],
-                label: `${weekdays[date.getDay()]}, ${date.getDate()}/${date.getMonth() + 1}`
-            })
-        }
-        return days
+        const selectedDay = showTimeDays.find(
+            (day) => day.dayOfWeek.value.split('T')[0] === selectedDate
+        )
+
+        return selectedDay?.times || []
+    }, [showTimeDays, selectedDate])
+
+    // Reset dependent fields when parent selection changes
+    const handleCinemaChange = (value: string) => {
+        setSelectedCinema(value)
+        setSelectedMovie('')
+        setSelectedDate('')
+        setSelectedShowtime('')
     }
 
-    const dates = getNext7Days()
+    const handleMovieChange = (value: string) => {
+        setSelectedMovie(value)
+        setSelectedDate('')
+        setSelectedShowtime('')
+    }
+
+    const handleDateChange = (value: string) => {
+        setSelectedDate(value)
+        setSelectedShowtime('')
+    }
 
     const handleBooking = async () => {
         if (!selectedCinema || !selectedMovie || !selectedDate || !selectedShowtime) {
@@ -191,21 +169,29 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ movies = [] }) => {
                                 <div className="relative">
                                     <select
                                         value={selectedCinema}
-                                        onChange={(e) => setSelectedCinema(e.target.value)}
+                                        onChange={(e) => handleCinemaChange(e.target.value)}
                                         className="w-full px-3 py-2.5 bg-[#1a2232] border border-gray-700 rounded-lg text-white text-sm appearance-none cursor-pointer transition-all duration-300 hover:border-[#fe7e32]/50 focus:border-[#fe7e32] focus:ring-2 focus:ring-[#fe7e32]/20 focus:outline-none"
                                     >
                                         <option value="" className="bg-[#1a2232]">
-                                            Select cinema...
+                                            {branchesLoading
+                                                ? 'Loading cinemas...'
+                                                : 'Select cinema...'}
                                         </option>
-                                        {cinemas.map((cinema) => (
-                                            <option
-                                                key={cinema.id}
-                                                value={cinema.id}
-                                                className="bg-[#1a2232]"
-                                            >
-                                                {cinema.name} - {cinema.location}
+                                        {branchesError ? (
+                                            <option value="" className="bg-[#1a2232] text-red-400">
+                                                Error loading cinemas
                                             </option>
-                                        ))}
+                                        ) : (
+                                            branches.map((branch) => (
+                                                <option
+                                                    key={branch.id}
+                                                    value={branch.id}
+                                                    className="bg-[#1a2232]"
+                                                >
+                                                    {branch.name} - {branch.address}
+                                                </option>
+                                            ))
+                                        )}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none transition-transform duration-300 group-hover:text-[#fe7e32]" />
                                     {selectedCinema && (
@@ -234,21 +220,29 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ movies = [] }) => {
                                 <div className="relative">
                                     <select
                                         value={selectedMovie}
-                                        onChange={(e) => setSelectedMovie(e.target.value)}
+                                        onChange={(e) => handleMovieChange(e.target.value)}
                                         className="w-full px-3 py-2.5 bg-[#1a2232] border border-gray-700 rounded-lg text-white text-sm appearance-none cursor-pointer transition-all duration-300 hover:border-[#648ddb]/50 focus:border-[#648ddb] focus:ring-2 focus:ring-[#648ddb]/20 focus:outline-none"
                                     >
                                         <option value="" className="bg-[#1a2232]">
-                                            Select movie...
+                                            {moviesLoading
+                                                ? 'Loading movies...'
+                                                : 'Select movie...'}
                                         </option>
-                                        {mockMovies.map((movie) => (
-                                            <option
-                                                key={movie.id}
-                                                value={movie.id}
-                                                className="bg-[#1a2232]"
-                                            >
-                                                {movie.title} ({movie.ageRating})
+                                        {!selectedCinema ? (
+                                            <option value="" className="bg-[#1a2232] text-gray-500">
+                                                Please select cinema first
                                             </option>
-                                        ))}
+                                        ) : (
+                                            branchMovies.map((movie) => (
+                                                <option
+                                                    key={movie.id}
+                                                    value={movie.id}
+                                                    className="bg-[#1a2232]"
+                                                >
+                                                    {movie.name} ({movie.ageLimit}+)
+                                                </option>
+                                            ))
+                                        )}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none transition-transform duration-300 group-hover:text-[#648ddb]" />
                                     {selectedMovie && (
@@ -277,21 +271,27 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ movies = [] }) => {
                                 <div className="relative">
                                     <select
                                         value={selectedDate}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        onChange={(e) => handleDateChange(e.target.value)}
                                         className="w-full px-3 py-2.5 bg-[#1a2232] border border-gray-700 rounded-lg text-white text-sm appearance-none cursor-pointer transition-all duration-300 hover:border-[#fe7e32]/50 focus:border-[#fe7e32] focus:ring-2 focus:ring-[#fe7e32]/20 focus:outline-none"
                                     >
                                         <option value="" className="bg-[#1a2232]">
                                             Select date...
                                         </option>
-                                        {dates.map((date) => (
-                                            <option
-                                                key={date.value}
-                                                value={date.value}
-                                                className="bg-[#1a2232]"
-                                            >
-                                                {date.label}
+                                        {!selectedMovie ? (
+                                            <option value="" className="bg-[#1a2232] text-gray-500">
+                                                Please select movie first
                                             </option>
-                                        ))}
+                                        ) : (
+                                            availableDates.map((date) => (
+                                                <option
+                                                    key={date.value}
+                                                    value={date.value}
+                                                    className="bg-[#1a2232]"
+                                                >
+                                                    {date.label}
+                                                </option>
+                                            ))
+                                        )}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none transition-transform duration-300 group-hover:text-[#fe7e32]" />
                                     {selectedDate && (
@@ -324,18 +324,25 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ movies = [] }) => {
                                         className="w-full px-3 py-2.5 bg-[#1a2232] border border-gray-700 rounded-lg text-white text-sm appearance-none cursor-pointer transition-all duration-300 hover:border-[#648ddb]/50 focus:border-[#648ddb] focus:ring-2 focus:ring-[#648ddb]/20 focus:outline-none"
                                     >
                                         <option value="" className="bg-[#1a2232]">
-                                            Select showtime...
+                                            {showTimesLoading
+                                                ? 'Loading showtimes...'
+                                                : 'Select showtime...'}
                                         </option>
-                                        {showtimes.map((showtime) => (
-                                            <option
-                                                key={showtime.id}
-                                                value={showtime.id}
-                                                className="bg-[#1a2232]"
-                                            >
-                                                {showtime.time} - {showtime.type} (
-                                                {showtime.price.toLocaleString()}₫)
+                                        {!selectedDate ? (
+                                            <option value="" className="bg-[#1a2232] text-gray-500">
+                                                Please select date first
                                             </option>
-                                        ))}
+                                        ) : (
+                                            availableShowtimes.map((showtime) => (
+                                                <option
+                                                    key={showtime.id}
+                                                    value={showtime.id}
+                                                    className="bg-[#1a2232]"
+                                                >
+                                                    {showtime.time}
+                                                </option>
+                                            ))
+                                        )}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none transition-transform duration-300 group-hover:text-[#648ddb]" />
                                     {selectedShowtime && (
