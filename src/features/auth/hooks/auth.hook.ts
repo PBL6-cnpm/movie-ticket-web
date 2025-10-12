@@ -1,10 +1,11 @@
 import * as authApi from '@/shared/api/auth-api'
+import type { CredentialResponse } from '@react-oauth/google'
 import { useAuthStore } from '../stores/auth.store'
 import type { Account } from '../types/account.type'
 import type {
     LoginCredentials,
     RegisterCredentials,
-    ResendVerificationEmailCredentials
+    RequestEmailCredential
 } from '../types/auth.type'
 import type {
     ApiResponse,
@@ -12,7 +13,7 @@ import type {
     AxiosSuccessResponse
 } from '../types/base-response.type'
 import { validateEmail, validatePassword } from '../utils/auth.util'
-import type { CredentialResponse } from '@react-oauth/google'
+import { HttpStatusCode } from 'axios'
 
 export const useAuth = () => {
     const {
@@ -58,22 +59,23 @@ export const useAuth = () => {
                     data: data.account
                 }
             }
-            
+
             return {
                 success: true,
                 data: data.account
             }
         } catch (error: unknown) {
             const apiError = error as ApiResponse<null>
+            const errorStatusCode = apiError.statusCode
             const errorMessage = apiError.message || 'Login failed'
 
             console.log('Login error:', errorMessage)
 
-            setError('Login failed')
+            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Login failed')
 
             return {
                 success: false,
-                statusCode: apiError.statusCode,
+                statusCode: errorStatusCode,
                 message: errorMessage
             }
         } finally {
@@ -81,15 +83,17 @@ export const useAuth = () => {
         }
     }
 
-    const handleSocialLogin = async (credentialResponse: CredentialResponse): Promise<AxiosSuccessResponse<Account | string> | AxiosErrorResponse> => {
+    const handleSocialLogin = async (
+        credentialResponse: CredentialResponse
+    ): Promise<AxiosSuccessResponse<Account | string> | AxiosErrorResponse> => {
         try {
             setLoading(true)
             clearError()
 
             // Call the actual API
-            const idToken = credentialResponse.credential;
+            const idToken = credentialResponse.credential
             if (!idToken) {
-                throw new Error('Google login failed: No token received');
+                throw new Error('Google login failed: No token received')
             }
             const data = (await authApi.socialLogin(idToken)).data.data
 
@@ -103,15 +107,16 @@ export const useAuth = () => {
             }
         } catch (error: unknown) {
             const apiError = error as ApiResponse<null>
+            const errorStatusCode = apiError.statusCode
             const errorMessage = apiError.message || 'Social login failed'
 
             console.log('Login error:', errorMessage)
 
-            setError('Login failed')
+            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Social login failed')
 
             return {
                 success: false,
-                statusCode: apiError.statusCode,
+                statusCode: errorStatusCode,
                 message: errorMessage
             }
         } finally {
@@ -143,24 +148,28 @@ export const useAuth = () => {
             }
 
             // Call the actual API
-            const data = (await authApi.register(
-                credentials.email,
-                credentials.password,
-                credentials.fullName,
-                credentials.confirmPassword
-            )).data.data
+            const data = (
+                await authApi.register(
+                    credentials.email,
+                    credentials.password,
+                    credentials.fullName,
+                    credentials.confirmPassword
+                )
+            ).data.data
 
             return { success: true, data }
         } catch (error: unknown) {
             const apiError = error as ApiResponse<null>
+            const errorStatusCode = apiError.statusCode
             const errorMessage = apiError.message || 'Registration failed'
 
             console.log('Registration error:', errorMessage)
-            setError('Registration failed')
+
+            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Registration failed')
 
             return {
                 success: false,
-                statusCode: apiError.statusCode,
+                statusCode: errorStatusCode,
                 message: errorMessage
             }
         } finally {
@@ -169,7 +178,7 @@ export const useAuth = () => {
     }
 
     const handleResendVerificationEmail = async (
-        credentials: ResendVerificationEmailCredentials
+        credentials: RequestEmailCredential
     ): Promise<AxiosSuccessResponse<null> | AxiosErrorResponse> => {
         try {
             setLoading(true)
@@ -188,14 +197,51 @@ export const useAuth = () => {
             }
         } catch (error: unknown) {
             const apiError = error as ApiResponse<null>
+            const errorStatusCode = apiError.statusCode
             const errorMessage = apiError.message || 'Resend verification email failed'
 
             console.log('Resend verification email error:', errorMessage)
-            setError('Resend verification email failed')
+
+            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Resend verification email failed')
 
             return {
                 success: false,
-                statusCode: apiError.statusCode,
+                statusCode: errorStatusCode,
+                message: errorMessage
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleForgotPassword = async (
+        credentials: RequestEmailCredential
+    ): Promise<AxiosSuccessResponse<null> | AxiosErrorResponse> => {
+        try {
+            setLoading(true)
+            clearError()
+
+            if (!validateEmail(credentials.email)) {
+                throw new Error('Invalid email format')
+            }
+
+            // Call the actual API
+            await authApi.forgotPassword(credentials.email)
+
+            return {
+                success: true,
+                data: null
+            }
+        } catch (error: unknown) {
+            const apiError = error as ApiResponse<null>
+            const errorStatusCode = apiError.statusCode
+            const errorMessage = apiError.message || 'Request failed'
+
+            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Request failed')
+
+            return {
+                success: false,
+                statusCode: errorStatusCode,
                 message: errorMessage
             }
         } finally {
@@ -211,14 +257,14 @@ export const useAuth = () => {
             logout()
         } catch (error: unknown) {
             const apiError = error as ApiResponse<null>
+            const errorStatusCode = apiError.statusCode
             const errorMessage = apiError.message || 'Logout failed'
 
-            console.log('Logout error:', errorMessage)
-            setError('Logout failed')
+            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Logout failed')
 
             return {
                 success: false,
-                statusCode: apiError.statusCode,
+                statusCode: errorStatusCode,
                 message: errorMessage
             }
         } finally {
@@ -235,6 +281,7 @@ export const useAuth = () => {
         socialLogin: handleSocialLogin,
         register: handleRegister,
         resendVerificationEmail: handleResendVerificationEmail,
+        forgotPassword: handleForgotPassword,
         logout: handleLogout,
         clearError
     }

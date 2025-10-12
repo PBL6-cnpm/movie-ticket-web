@@ -5,31 +5,21 @@ import { Card, CardContent, CardHeader } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useAuth } from '../hooks/auth.hook'
 
 const ForgotPasswordForm = () => {
     const [email, setEmail] = useState('')
-    const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
     const navigate = useNavigate()
 
+    const { forgotPassword, isLoading, error } = useAuth()
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setIsLoading(true)
-        setError('')
 
-        try {
-            // TODO: Implement forgot password API call
-            // const result = await forgotPassword({ email })
-
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 2000))
-
+        const result = await forgotPassword({ email })
+        if (result.success) {
             setSuccess(true)
-        } catch {
-            setError('Failed to send reset email. Please try again.')
-        } finally {
-            setIsLoading(false)
         }
     }
 
@@ -66,14 +56,12 @@ const ForgotPasswordForm = () => {
                             <h2 className="text-2xl font-bold text-center text-primary">
                                 Check Your Email
                             </h2>
-                            <p className="text-center text-secondary text-sm">
-                                We've sent a password reset link to your email address
-                            </p>
                         </CardHeader>
+                        
                         <CardContent className="space-y-6">
                             <div className="text-center space-y-4">
                                 <p className="text-sm text-secondary">
-                                    Check your email and click the link to reset your password. If
+                                    We've sent a new password to your email address. If
                                     you don't see the email, check your spam folder.
                                 </p>
 
@@ -148,7 +136,7 @@ const ForgotPasswordForm = () => {
                             Forgot Password?
                         </h2>
                         <p className="text-center text-secondary text-sm">
-                            Don't worry! Enter your email and we'll send you a reset link
+                            Don't worry! Enter your email and we'll send you a new password.
                         </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -248,36 +236,6 @@ const ForgotPasswordForm = () => {
                                 </Button>
                             </div>
                         </form>
-
-                        {/* Additional Information */}
-                        <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4">
-                            <div className="flex">
-                                <div className="flex-shrink-0">
-                                    <svg
-                                        className="w-5 h-5 text-blue-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                                <div className="ml-3">
-                                    <h3 className="text-sm font-medium text-blue-400">
-                                        Password Reset Info
-                                    </h3>
-                                    <div className="mt-2 text-sm text-blue-300">
-                                        <p>
-                                            The reset link will expire in 1 hour for security
-                                            reasons.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         <div className="text-center space-y-4">
                             <div className="relative">

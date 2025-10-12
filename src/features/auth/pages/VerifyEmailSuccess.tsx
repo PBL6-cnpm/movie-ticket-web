@@ -45,10 +45,10 @@ const VerifyEmailSuccess = () => {
                             Email Verified Successfully!
                         </h2>
                         <p className="text-center text-secondary text-sm">
-                            {email ? (
+                            { email ? (
                                 <>
                                     Your email{' '}
-                                    <span className="text-brand-primary font-medium">{email}</span>{' '}
+                                    <span className="text-brand-primary font-medium">{ email }</span>{' '}
                                     has been successfully verified
                                 </>
                             ) : (
@@ -59,33 +59,6 @@ const VerifyEmailSuccess = () => {
 
                     <CardContent className="space-y-6">
                         <div className="text-center space-y-4">
-                            {/* Verified Icon */}
-                            {/* <div className="mx-auto w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center">
-                                <svg
-                                    className="w-10 h-10 text-green-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                            </div>
-
-                            <div className="space-y-2">
-                                <h3 className="text-lg font-semibold text-primary">
-                                    Account Activated
-                                </h3>
-                                <p className="text-secondary text-sm leading-relaxed">
-                                    Congratulations! Your account has been successfully activated.
-                                    You can now log in and enjoy all the features of Cinestech.
-                                </p>
-                            </div> */}
-
                             <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-4">
                                 <div className="flex items-start space-x-3">
                                     <svg
@@ -138,7 +111,7 @@ const VerifyEmailSuccess = () => {
                                     Ready to explore?{' '}
                                     <button
                                         onClick={() => navigate({ to: '/' })}
-                                        className="text-brand-primary hover:text-brand-secondary transition-colors font-medium"
+                                        className="text-brand-primary hover:text-brand-secondary transition-colors font-medium cursor-pointer"
                                     >
                                         Browse Movies
                                     </button>
