@@ -5,6 +5,7 @@ import type { AuthState } from '../types/auth.type'
 
 interface AuthStore extends Omit<AuthState, 'user'> {
     account: Account | null
+    updateAccount: (account: Partial<Account>) => void
     login: (account: Account, accessToken: string) => void
     logout: () => void
     updateAccessToken: (accessToken: string) => void
@@ -20,6 +21,14 @@ export const useAuthStore = create<AuthStore>()(
             isLoading: false,
             isAuthenticated: false,
             error: null,
+
+            updateAccount: (partialAccount) => {
+                set((state) => ({
+                    account: state.account
+                        ? { ...state.account, ...partialAccount }
+                        : null
+                }));
+            },
 
             login: (account, accessToken) => {
                 if (!accessToken) {
