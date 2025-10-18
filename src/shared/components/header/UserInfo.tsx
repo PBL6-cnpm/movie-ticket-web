@@ -37,8 +37,15 @@ export default function UserInfo({ account }: UserInfoProps) {
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 p-2 rounded-full hover:bg-surface transition-colors"
             >
-                {/* User Avatar */}
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                {/* User Avatar - Click to go to profile */}
+                <div
+                    className="w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/80 transition-colors"
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        window.location.href = '/profile/edit'
+                    }}
+                    title="Go to Profile"
+                >
                     <span className="text-white text-sm font-medium">
                         {account.fullName?.charAt(0).toUpperCase() || 'U'}
                     </span>
@@ -46,7 +53,7 @@ export default function UserInfo({ account }: UserInfoProps) {
 
                 {/* Dropdown Arrow */}
                 <svg
-                    className={`w-4 h-4 text-secondary transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-secondary transition-transform cursor-pointer ${isOpen ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -73,7 +80,7 @@ export default function UserInfo({ account }: UserInfoProps) {
                             </div>
                             <div>
                                 <p className="font-medium text-primary">{account.fullName}</p>
-                                <p className="text-sm text-secondary">{account.email}</p>
+                                {/* <p className="text-sm text-secondary">{account.email}</p> */}
                             </div>
                         </div>
                     </div>
@@ -84,10 +91,9 @@ export default function UserInfo({ account }: UserInfoProps) {
                         <button
                             onClick={() => {
                                 setIsOpen(false)
-                                // Add navigation to profile page
-                                console.log('Navigate to profile')
+                                window.location.href = '/profile/edit'
                             }}
-                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-primary hover:bg-surface transition-colors"
+                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-primary hover:bg-white/20 transition-colors duration-200 cursor-pointer"
                         >
                             <svg
                                 className="w-4 h-4"
@@ -115,11 +121,12 @@ export default function UserInfo({ account }: UserInfoProps) {
                             className="flex items-center gap-3 w-full px-4 py-2 text-sm text-primary hover:bg-surface transition-colors"
                         >
                             <svg
-                                className="w-4 h-4"
+                                className="w-5 h-5"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
                             >
+                                <circle cx="12" cy="12" r="8" />
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -141,7 +148,7 @@ export default function UserInfo({ account }: UserInfoProps) {
                         {/* Logout */}
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 transition-colors"
+                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 transition-colors duration-200 cursor-pointer"
                         >
                             <svg
                                 className="w-4 h-4"
