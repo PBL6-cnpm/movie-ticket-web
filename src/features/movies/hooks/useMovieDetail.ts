@@ -9,9 +9,6 @@ export const useMovieDetail = (movieId: string) => {
             console.log('useMovieDetail API call:', `/movies/${movieId}`)
             try {
                 const response = await apiClient.get(`/movies/${movieId}`)
-                console.log('useMovieDetail full response:', response)
-                console.log('useMovieDetail response.data:', response.data)
-                console.log('useMovieDetail response.status:', response.status)
 
                 // Check if response structure is correct
                 if (!response.data) {
@@ -20,17 +17,14 @@ export const useMovieDetail = (movieId: string) => {
 
                 // Handle different response structures
                 if (response.data.data) {
-                    console.log('Using response.data.data:', response.data.data)
                     return response.data.data
                 }
 
                 // Maybe the response is direct movie data
                 if (response.data.id) {
-                    console.log('Using direct response.data:', response.data)
                     return response.data
                 }
 
-                console.error('Invalid response structure:', response.data)
                 throw new Error('Invalid response structure')
             } catch (error) {
                 console.error('useMovieDetail error:', error)

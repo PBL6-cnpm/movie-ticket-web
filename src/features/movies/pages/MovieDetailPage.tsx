@@ -1,4 +1,4 @@
-import { Link, useParams } from '@tanstack/react-router'
+import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import {
     Calendar,
     ChevronDown,
@@ -19,7 +19,6 @@ import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useBranches, useMovieShowTimes } from '../../home/hooks/useBookingApi'
 import { useMovieDetail, useSimilarMovies } from '../hooks/useMovieDetail'
-import SeatSelection from '../components/SeatSelection'
 // ----- HELPER FUNCTIONS -----
 const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60)
@@ -180,34 +179,16 @@ const CastSection = ({
 
 // Component cho phần đặt vé
 const BookingSection = ({ movieId }: { movieId: string }) => {
+    const navigate = useNavigate()
     const [selectedCinema, setSelectedCinema] = useState('')
     const [selectedDate, setSelectedDate] = useState('')
     const [selectedShowtime, setSelectedShowtime] = useState('')
-    const [selectedSeats, setSelectedSeats] = useState<string[]>([])
-
-    // Hàm xử lý chọn ghế
-    const handleSeatSelect = (seatId: string) => {
-        setSelectedSeats((prevSelectedSeats) =>
-            prevSelectedSeats.includes(seatId)
-                ? prevSelectedSeats.filter((s) => s !== seatId)
-                : [...prevSelectedSeats, seatId]
-        )
-    }
-
-    // Tính tổng tiền (giả sử giá vé 75,000 VNĐ)
-    const totalCost = selectedSeats.length * 75000
 
     const { data: branches = [], isLoading: branchesLoading } = useBranches()
     const { data: showTimeDays = [], isLoading: showTimesLoading } = useMovieShowTimes(movieId)
 
     // Debug API data
-    useEffect(() => {
-        console.log('🎬 DEBUG - MovieId:', movieId)
-        console.log('🏢 DEBUG - Branches:', branches)
-        console.log('📅 DEBUG - ShowTimeDays:', showTimeDays)
-        console.log('⏰ DEBUG - ShowTimesLoading:', showTimesLoading)
-        console.log('🏢 DEBUG - BranchesLoading:', branchesLoading)
-    }, [movieId, branches, showTimeDays, showTimesLoading, branchesLoading])
+    useEffect(() => {}, [movieId, branches, showTimeDays, showTimesLoading, branchesLoading])
 
     useEffect(() => {
         if (branches.length > 0 && !selectedCinema) setSelectedCinema(branches[0].id)
@@ -239,32 +220,27 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
     }, [showTimeDays, selectedDate])
 
     const handleCinemaChange = (value: string) => {
-        console.log('🎯 DEBUG - Selected Cinema ID:', value)
         setSelectedCinema(value)
         setSelectedShowtime('')
-        setSelectedSeats([]) // Reset ghế khi đổi rạp
     }
     const handleDateChange = (value: string) => {
-        console.log('🗓️ DEBUG - Selected Date:', value)
         setSelectedDate(value)
         setSelectedShowtime('')
-        setSelectedSeats([]) // Reset ghế khi đổi ngày
     }
 
     const handleShowtimeSelect = (showtimeId: string) => {
-        console.log('🎬 DEBUG - Selected Showtime:', showtimeId)
-        setSelectedShowtime(showtimeId)
-        setSelectedSeats([]) // Reset ghế khi đổi suất chiếu
+        // Navigate to booking page immediately
+        navigate({
+            to: '/booking/$movieId/$showtimeId',
+            params: {
+                movieId: movieId,
+                showtimeId: showtimeId
+            }
+        })
     }
 
     // Debug selected values
-    useEffect(() => {
-        console.log('🔍 DEBUG - Current Selections:')
-        console.log('  - Selected Cinema ID:', selectedCinema)
-        console.log('  - Selected Date:', selectedDate)
-        console.log('  - Selected Showtime ID:', selectedShowtime)
-        console.log('  - Available Showtimes:', availableShowtimes)
-    }, [selectedCinema, selectedDate, selectedShowtime, availableShowtimes])
+    useEffect(() => {}, [selectedCinema, selectedDate, selectedShowtime, availableShowtimes])
     const selectedCinemaName = branches.find((b) => b.id === selectedCinema)?.name || 'Cinema'
 
     if (branchesLoading || showTimesLoading) {
@@ -363,62 +339,6 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                                 <p className="text-[#cccccc]">No showtimes available.</p>
                             </div>
                         )}
-                    </div>
-                )}
-
-                {/* Seat Selection Component */}
-                {selectedShowtime && (
-                    <SeatSelection
-                        showtimeId={selectedShowtime}
-                        selectedSeats={selectedSeats}
-                        onSeatSelect={handleSeatSelect}
-                    />
-                )}
-
-                {/* Book Now Button - Updated */}
-                {selectedShowtime && (
-                    <div className="pt-4">
-                        <button
-                            disabled={selectedSeats.length === 0}
-                            onClick={() => {
-                                const selectedCinemaData = branches.find(
-                                    (b) => b.id === selectedCinema
-                                )
-                                const selectedShowtimeData = availableShowtimes.find(
-                                    (s) => s.id === selectedShowtime
-                                )
-
-                                console.log('🎫 BOOK NOW CLICKED - Booking Details:')
-                                console.log('  🎬 Movie ID:', movieId)
-                                console.log('  🏢 Cinema:', {
-                                    id: selectedCinema,
-                                    name: selectedCinemaData?.name,
-                                    address: selectedCinemaData?.address
-                                })
-                                console.log('  📅 Date:', selectedDate)
-                                console.log('  ⏰ Showtime:', {
-                                    id: selectedShowtime,
-                                    time: selectedShowtimeData?.time
-                                })
-                                console.log('  🎫 Selected Seats:', selectedSeats)
-                                console.log('  � Total Cost:', totalCost)
-                                console.log('  �📋 Full Booking Data:', {
-                                    movieId,
-                                    cinemaId: selectedCinema,
-                                    cinemaName: selectedCinemaData?.name,
-                                    date: selectedDate,
-                                    showtimeId: selectedShowtime,
-                                    showtimeTime: selectedShowtimeData?.time,
-                                    selectedSeats,
-                                    totalCost
-                                })
-                            }}
-                            className="w-full bg-[#648ddb] hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg shadow-[#648ddb]/20 hover:shadow-[#648ddb]/40 transform hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none"
-                        >
-                            {selectedSeats.length > 0
-                                ? `Đặt ${selectedSeats.length} vé - ${totalCost.toLocaleString('vi-VN')} VNĐ`
-                                : 'Vui lòng chọn ghế'}
-                        </button>
                     </div>
                 )}
             </div>
