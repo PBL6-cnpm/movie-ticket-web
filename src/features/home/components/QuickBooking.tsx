@@ -1,6 +1,10 @@
+import { useSearch } from '@tanstack/react-router'
 import { Calendar, CheckCircle2, ChevronDown, Clock, Film, MapPin, Sparkles } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
+
+import { useAutoNavigate } from '@/shared/hooks/useAutoNavigate'
 import { useBranches, useBranchMovies, useMovieShowTimes } from '../hooks/useBookingApi'
+import { homeRoute } from '../routes'
 
 interface QuickBookingProps {
     movies: Array<{
@@ -13,18 +17,23 @@ interface QuickBookingProps {
 }
 
 const QuickBooking: React.FC<QuickBookingProps> = () => {
-    const [selectedCinema, setSelectedCinema] = useState<string>('')
-    const [selectedMovie, setSelectedMovie] = useState<string>('')
-    const [selectedDate, setSelectedDate] = useState<string>('')
-    const [selectedShowtime, setSelectedShowtime] = useState<string>('')
+    const searchParams = useSearch({ from: homeRoute.id })
+    const autoNavigate = useAutoNavigate()
+
     const [isBooking, setIsBooking] = useState(false)
     const [focusedField, setFocusedField] = useState<string | null>(null)
 
+    const branchId = 'branchId' in searchParams ? String(searchParams.branchId) : undefined
+    const movieId = 'movieId' in searchParams ? String(searchParams.movieId) : undefined
+    const date = 'date' in searchParams ? String(searchParams.date) : undefined
+    const showtimeId = 'showtimeId' in searchParams ? String(searchParams.showtimeId) : undefined
+
     // API calls
     const { data: branches = [], isLoading: branchesLoading, error: branchesError } = useBranches()
-    const { data: branchMovies = [], isLoading: moviesLoading } = useBranchMovies(selectedCinema)
-    const { data: showTimeDays = [], isLoading: showTimesLoading } =
-        useMovieShowTimes(selectedMovie)
+    const { data: branchMovies = [], isLoading: moviesLoading } = useBranchMovies(branchId || '')
+    const { data: showTimeDays = [], isLoading: showTimesLoading } = useMovieShowTimes(
+        movieId || ''
+    )
 
     // Available dates from showtimes
     const availableDates = useMemo(() => {
@@ -36,36 +45,15 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
 
     // Available showtimes for selected date
     const availableShowtimes = useMemo(() => {
-        if (!selectedDate) return []
+        if (!date) return []
 
-        const selectedDay = showTimeDays.find(
-            (day) => day.dayOfWeek.value.split('T')[0] === selectedDate
-        )
+        const selectedDay = showTimeDays.find((day) => day.dayOfWeek.value.split('T')[0] === date)
 
         return selectedDay?.times || []
-    }, [showTimeDays, selectedDate])
-
-    // Reset dependent fields when parent selection changes
-    const handleCinemaChange = (value: string) => {
-        setSelectedCinema(value)
-        setSelectedMovie('')
-        setSelectedDate('')
-        setSelectedShowtime('')
-    }
-
-    const handleMovieChange = (value: string) => {
-        setSelectedMovie(value)
-        setSelectedDate('')
-        setSelectedShowtime('')
-    }
-
-    const handleDateChange = (value: string) => {
-        setSelectedDate(value)
-        setSelectedShowtime('')
-    }
+    }, [showTimeDays, date])
 
     const handleBooking = async () => {
-        if (!selectedCinema || !selectedMovie || !selectedDate || !selectedShowtime) {
+        if (!branchId || !movieId || !date || !showtimeId) {
             alert('Please select all fields!')
             return
         }
@@ -76,25 +64,23 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
         await new Promise((resolve) => setTimeout(resolve, 1500))
 
         console.log('Booking:', {
-            cinema: selectedCinema,
-            movie: selectedMovie,
-            date: selectedDate,
-            showtime: selectedShowtime
+            cinema: branchId,
+            movie: movieId,
+            date: date,
+            showtime: showtimeId
         })
 
         setIsBooking(false)
     }
 
-    const isFormComplete = selectedCinema && selectedMovie && selectedDate && selectedShowtime
-    const completedSteps = [selectedCinema, selectedMovie, selectedDate, selectedShowtime].filter(
-        Boolean
-    ).length
+    const isFormComplete = branchId && movieId && date && showtimeId
+    const completedSteps = [branchId, movieId, date, showtimeId].filter(Boolean).length
 
     // Determine which steps to show on mobile
     const showCinemaStep = true
-    const showMovieStep = selectedCinema
-    const showDateStep = selectedCinema && selectedMovie
-    const showShowtimeStep = selectedCinema && selectedMovie && selectedDate
+    const showMovieStep = branchId
+    const showDateStep = branchId && movieId
+    const showShowtimeStep = branchId && movieId && date
 
     return (
         <div className="relative -mt-6 z-10">
@@ -162,14 +148,14 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                     <span>
                                         <span className="lg:hidden">Step 1: </span>Cinema
                                     </span>
-                                    {selectedCinema && (
+                                    {branchId && (
                                         <CheckCircle2 className="w-3.5 h-3.5 text-green-400 animate-in fade-in zoom-in" />
                                     )}
                                 </label>
                                 <div className="relative">
                                     <select
-                                        value={selectedCinema}
-                                        onChange={(e) => handleCinemaChange(e.target.value)}
+                                        value={branchId || ''}
+                                        onChange={(e) => autoNavigate('branchId', e.target.value)}
                                         className="w-full px-3 py-2.5 bg-[#1a2232] border border-gray-700 rounded-lg text-white text-sm appearance-none cursor-pointer transition-all duration-300 hover:border-[#fe7e32]/50 focus:border-[#fe7e32] focus:ring-2 focus:ring-[#fe7e32]/20 focus:outline-none"
                                     >
                                         <option value="" className="bg-[#1a2232]">
@@ -194,7 +180,7 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                         )}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none transition-transform duration-300 group-hover:text-[#fe7e32]" />
-                                    {selectedCinema && (
+                                    {branchId && (
                                         <div className="absolute inset-0 border-2 border-[#fe7e32]/30 rounded-lg pointer-events-none animate-in fade-in" />
                                     )}
                                 </div>
@@ -213,14 +199,14 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                     <span>
                                         <span className="lg:hidden">Step 2: </span>Movie
                                     </span>
-                                    {selectedMovie && (
+                                    {movieId && (
                                         <CheckCircle2 className="w-3.5 h-3.5 text-green-400 animate-in fade-in zoom-in" />
                                     )}
                                 </label>
                                 <div className="relative">
                                     <select
-                                        value={selectedMovie}
-                                        onChange={(e) => handleMovieChange(e.target.value)}
+                                        value={movieId || ''}
+                                        onChange={(e) => autoNavigate('movieId', e.target.value)}
                                         className="w-full px-3 py-2.5 bg-[#1a2232] border border-gray-700 rounded-lg text-white text-sm appearance-none cursor-pointer transition-all duration-300 hover:border-[#648ddb]/50 focus:border-[#648ddb] focus:ring-2 focus:ring-[#648ddb]/20 focus:outline-none"
                                     >
                                         <option value="" className="bg-[#1a2232]">
@@ -228,7 +214,7 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                                 ? 'Loading movies...'
                                                 : 'Select movie...'}
                                         </option>
-                                        {!selectedCinema ? (
+                                        {!branchId ? (
                                             <option value="" className="bg-[#1a2232] text-gray-500">
                                                 Please select cinema first
                                             </option>
@@ -245,7 +231,7 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                         )}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none transition-transform duration-300 group-hover:text-[#648ddb]" />
-                                    {selectedMovie && (
+                                    {movieId && (
                                         <div className="absolute inset-0 border-2 border-[#648ddb]/30 rounded-lg pointer-events-none animate-in fade-in" />
                                     )}
                                 </div>
@@ -264,20 +250,20 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                     <span>
                                         <span className="lg:hidden">Step 3: </span>Date
                                     </span>
-                                    {selectedDate && (
+                                    {date && (
                                         <CheckCircle2 className="w-3.5 h-3.5 text-green-400 animate-in fade-in zoom-in" />
                                     )}
                                 </label>
                                 <div className="relative">
                                     <select
-                                        value={selectedDate}
-                                        onChange={(e) => handleDateChange(e.target.value)}
+                                        value={date || ''}
+                                        onChange={(e) => autoNavigate('date', e.target.value)}
                                         className="w-full px-3 py-2.5 bg-[#1a2232] border border-gray-700 rounded-lg text-white text-sm appearance-none cursor-pointer transition-all duration-300 hover:border-[#fe7e32]/50 focus:border-[#fe7e32] focus:ring-2 focus:ring-[#fe7e32]/20 focus:outline-none"
                                     >
                                         <option value="" className="bg-[#1a2232]">
                                             Select date...
                                         </option>
-                                        {!selectedMovie ? (
+                                        {!movieId ? (
                                             <option value="" className="bg-[#1a2232] text-gray-500">
                                                 Please select movie first
                                             </option>
@@ -294,7 +280,7 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                         )}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none transition-transform duration-300 group-hover:text-[#fe7e32]" />
-                                    {selectedDate && (
+                                    {date && (
                                         <div className="absolute inset-0 border-2 border-[#fe7e32]/30 rounded-lg pointer-events-none animate-in fade-in" />
                                     )}
                                 </div>
@@ -313,14 +299,14 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                     <span>
                                         <span className="lg:hidden">Step 4: </span>Showtime
                                     </span>
-                                    {selectedShowtime && (
+                                    {showtimeId && (
                                         <CheckCircle2 className="w-3.5 h-3.5 text-green-400 animate-in fade-in zoom-in" />
                                     )}
                                 </label>
                                 <div className="relative">
                                     <select
-                                        value={selectedShowtime}
-                                        onChange={(e) => setSelectedShowtime(e.target.value)}
+                                        value={showtimeId || ''}
+                                        onChange={(e) => autoNavigate('showtimeId', e.target.value)}
                                         className="w-full px-3 py-2.5 bg-[#1a2232] border border-gray-700 rounded-lg text-white text-sm appearance-none cursor-pointer transition-all duration-300 hover:border-[#648ddb]/50 focus:border-[#648ddb] focus:ring-2 focus:ring-[#648ddb]/20 focus:outline-none"
                                     >
                                         <option value="" className="bg-[#1a2232]">
@@ -328,7 +314,7 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                                 ? 'Loading showtimes...'
                                                 : 'Select showtime...'}
                                         </option>
-                                        {!selectedDate ? (
+                                        {!date ? (
                                             <option value="" className="bg-[#1a2232] text-gray-500">
                                                 Please select date first
                                             </option>
@@ -345,7 +331,7 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                         )}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none transition-transform duration-300 group-hover:text-[#648ddb]" />
-                                    {selectedShowtime && (
+                                    {showtimeId && (
                                         <div className="absolute inset-0 border-2 border-[#648ddb]/30 rounded-lg pointer-events-none animate-in fade-in" />
                                     )}
                                 </div>

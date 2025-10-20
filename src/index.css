@@ -10,6 +10,90 @@
     --brand-text-muted: #cccccc; /* Light gray - Secondary text */
 }
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --brand-primary: 254 89% 62%;
+        --brand-secondary: 334 94% 65%;
+        --brand-gradient: linear-gradient(to right, hsl(var(--brand-primary)), hsl(var(--brand-secondary)));
+        --brand-surface: 224 32% 14%;
+        --brand-text: 0 0% 100%;
+    }
+}
+
+@layer utilities {
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .animate-fade-in-right {
+        animation: fadeInRight 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes jump-in {
+        0% {
+            opacity: 0;
+            transform: translateY(-100%) scale(0.8);
+        }
+        80% {
+            opacity: 1;
+            transform: translateY(10%) scale(1.05);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes jump-out {
+        0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-100%) scale(0.8);
+        }
+    }
+
+    .animate-jump-in {
+        animation: jump-in 0.5s ease-out forwards;
+    }
+
+    .animate-jump-out {
+        animation: jump-out 0.4s ease-in forwards;
+    }
+}
+
+.animate-fade-in-right {
+    animation: fadeInRight 0.3s ease-out forwards;
+}
+
 /* Apply global styles */
 html {
     scroll-behavior: smooth;

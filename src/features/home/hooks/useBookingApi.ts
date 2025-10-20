@@ -69,12 +69,9 @@ interface ShowTimesResponse {
 }
 
 const fetchBranches = async (): Promise<Branch[]> => {
-    console.log('🚀 API DEBUG - Fetching branches')
     const response = await apiClient.get<BranchesResponse>('/branches')
-    console.log('📊 API DEBUG - Branches response:', response.data)
 
     if (response.data.success && response.data.data) {
-        console.log('✅ API DEBUG - Branches success, data:', response.data.data)
         return response.data.data
     }
 
@@ -95,12 +92,9 @@ const fetchBranchMovies = async (branchId: string): Promise<BranchMovie[]> => {
 }
 
 const fetchMovieShowTimes = async (movieId: string): Promise<ShowTimeDay[]> => {
-    console.log('🚀 API DEBUG - Fetching showtimes for movieId:', movieId)
     const response = await apiClient.get<ShowTimesResponse>(`/show-time/get-with-movie/${movieId}`)
-    console.log('📊 API DEBUG - Showtimes response:', response.data)
 
     if (response.data.success && response.data.data?.items) {
-        console.log('✅ API DEBUG - Showtimes success, items:', response.data.data.items)
         return response.data.data.items
     }
 
