@@ -35,6 +35,8 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
         movieId || ''
     )
 
+    // No auto-selection - users must manually select each step
+
     // Available dates from showtimes
     const availableDates = useMemo(() => {
         return showTimeDays.map((day) => ({

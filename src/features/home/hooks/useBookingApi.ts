@@ -102,6 +102,22 @@ const fetchMovieShowTimes = async (movieId: string): Promise<ShowTimeDay[]> => {
     throw new Error('Failed to fetch movie showtimes')
 }
 
+const fetchBranchMovieShowTimes = async (
+    movieId: string,
+    branchId: string
+): Promise<ShowTimeDay[]> => {
+    const response = await apiClient.get<ShowTimesResponse>(
+        `/show-time/get-with-branch?movieId=${movieId}&branchId=${branchId}`
+    )
+
+    if (response.data.success && response.data.data?.items) {
+        return response.data.data.items
+    }
+
+    console.error('❌ API DEBUG - Failed to fetch branch showtimes:', response.data)
+    throw new Error('Failed to fetch branch movie showtimes')
+}
+
 export const useBranches = () => {
     return useQuery({
         queryKey: ['branches'],
@@ -126,6 +142,16 @@ export const useMovieShowTimes = (movieId: string) => {
         queryKey: ['movieShowTimes', movieId],
         queryFn: () => fetchMovieShowTimes(movieId),
         enabled: !!movieId,
+        staleTime: 2 * 60 * 1000, // 2 minutes
+        gcTime: 5 * 60 * 1000 // 5 minutes
+    })
+}
+
+export const useBranchMovieShowTimes = (movieId: string, branchId: string) => {
+    return useQuery({
+        queryKey: ['branchMovieShowTimes', movieId, branchId],
+        queryFn: () => fetchBranchMovieShowTimes(movieId, branchId),
+        enabled: !!movieId && !!branchId,
         staleTime: 2 * 60 * 1000, // 2 minutes
         gcTime: 5 * 60 * 1000 // 5 minutes
     })
