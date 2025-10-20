@@ -29,7 +29,7 @@ const HomeSection = () => {
                 setLoading(true)
                 setError(null)
 
-                const response = await apiClient.get<ApiListResponse<ApiMovie>>('/movies?limit=30')
+                const response = await apiClient.get<ApiListResponse<ApiMovie>>('/movies?limit=10')
 
                 if (response.data.success && response.data.data?.items) {
                     const movies = response.data.data.items.map(

@@ -17,7 +17,11 @@ import React, { useEffect, useMemo, useState } from 'react'
 // UTILITIES & HOOKS
 import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
-import { useBranches, useMovieShowTimes } from '../../home/hooks/useBookingApi'
+import {
+    useBranches,
+    useBranchMovieShowTimes,
+    type ShowTimeDay
+} from '../../home/hooks/useBookingApi'
 import { useMovieDetail, useSimilarMovies } from '../hooks/useMovieDetail'
 // ----- HELPER FUNCTIONS -----
 const formatDuration = (minutes: number) => {
@@ -185,17 +189,14 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
     const [selectedShowtime, setSelectedShowtime] = useState('')
 
     const { data: branches = [], isLoading: branchesLoading } = useBranches()
-    const { data: showTimeDays = [], isLoading: showTimesLoading } = useMovieShowTimes(movieId)
+    const { data: showTimeDays = [], isLoading: showTimesLoading } = useBranchMovieShowTimes(
+        movieId,
+        selectedCinema
+    )
 
-    // Debug API data
-    useEffect(() => {}, [movieId, branches, showTimeDays, showTimesLoading, branchesLoading])
-
-    useEffect(() => {
-        if (branches.length > 0 && !selectedCinema) setSelectedCinema(branches[0].id)
-    }, [branches, selectedCinema])
-
+    // Available dates from showtimes
     const availableDates = useMemo(() => {
-        return showTimeDays.map((day) => ({
+        return showTimeDays.map((day: ShowTimeDay) => ({
             value: day.dayOfWeek.value.split('T')[0],
             label: `${day.dayOfWeek.name}, ${new Date(day.dayOfWeek.value).toLocaleDateString(
                 'vi-VN',
@@ -207,22 +208,21 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
         }))
     }, [showTimeDays])
 
-    useEffect(() => {
-        if (availableDates.length > 0 && !selectedDate) setSelectedDate(availableDates[0].value)
-    }, [availableDates, selectedDate])
-
+    // Available showtimes for selected date
     const availableShowtimes = useMemo(() => {
         if (!selectedDate) return []
         const selectedDay = showTimeDays.find(
-            (day) => day.dayOfWeek.value.split('T')[0] === selectedDate
+            (day: ShowTimeDay) => day.dayOfWeek.value.split('T')[0] === selectedDate
         )
         return selectedDay?.times || []
     }, [showTimeDays, selectedDate])
 
     const handleCinemaChange = (value: string) => {
         setSelectedCinema(value)
+        setSelectedDate('')
         setSelectedShowtime('')
     }
+
     const handleDateChange = (value: string) => {
         setSelectedDate(value)
         setSelectedShowtime('')
@@ -239,11 +239,9 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
         })
     }
 
-    // Debug selected values
-    useEffect(() => {}, [selectedCinema, selectedDate, selectedShowtime, availableShowtimes])
     const selectedCinemaName = branches.find((b) => b.id === selectedCinema)?.name || 'Cinema'
 
-    if (branchesLoading || showTimesLoading) {
+    if (branchesLoading) {
         return (
             <div className="bg-[#242b3d] rounded-2xl p-8 flex items-center justify-center min-h-[200px]">
                 <div className="flex items-center gap-3 text-white">
@@ -280,6 +278,7 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                                 onChange={(e) => handleCinemaChange(e.target.value)}
                                 className="w-full bg-[#1a2232] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#fe7e32] appearance-none cursor-pointer"
                             >
+                                <option value="">Select Cinema</option>
                                 {branches.map((branch) => (
                                     <option key={branch.id} value={branch.id}>
                                         {branch.name}
@@ -298,9 +297,17 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                             <select
                                 value={selectedDate}
                                 onChange={(e) => handleDateChange(e.target.value)}
-                                className="w-full bg-[#1a2232] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#fe7e32] appearance-none cursor-pointer"
+                                disabled={!selectedCinema}
+                                className="w-full bg-[#1a2232] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#fe7e32] appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {availableDates.map((date) => (
+                                <option value="">
+                                    {!selectedCinema
+                                        ? 'Select Cinema First'
+                                        : showTimesLoading
+                                          ? 'Loading...'
+                                          : 'Select Date'}
+                                </option>
+                                {availableDates.map((date: { value: string; label: string }) => (
                                     <option key={date.value} value={date.value}>
                                         {date.label}
                                     </option>
@@ -320,19 +327,21 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                         </label>
                         {availableShowtimes.length > 0 ? (
                             <div className="flex flex-wrap gap-3">
-                                {availableShowtimes.map((showtime) => (
-                                    <button
-                                        key={showtime.id}
-                                        onClick={() => handleShowtimeSelect(showtime.id)}
-                                        className={`px-5 py-2 rounded-lg font-medium transition-all text-sm border-2 ${
-                                            selectedShowtime === showtime.id
-                                                ? 'bg-[#fe7e32] border-[#fe7e32] text-white scale-105 shadow-lg shadow-[#fe7e32]/20'
-                                                : 'bg-transparent border-white/20 hover:border-[#fe7e32] text-white'
-                                        }`}
-                                    >
-                                        {showtime.time}
-                                    </button>
-                                ))}
+                                {availableShowtimes.map(
+                                    (showtime: { id: string; time: string }) => (
+                                        <button
+                                            key={showtime.id}
+                                            onClick={() => handleShowtimeSelect(showtime.id)}
+                                            className={`px-5 py-2 rounded-lg font-medium transition-all text-sm border-2 ${
+                                                selectedShowtime === showtime.id
+                                                    ? 'bg-[#fe7e32] border-[#fe7e32] text-white scale-105 shadow-lg shadow-[#fe7e32]/20'
+                                                    : 'bg-transparent border-white/20 hover:border-[#fe7e32] text-white'
+                                            }`}
+                                        >
+                                            {showtime.time}
+                                        </button>
+                                    )
+                                )}
                             </div>
                         ) : (
                             <div className="text-center py-6 bg-[#1a2232] rounded-lg">
