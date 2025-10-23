@@ -42,7 +42,8 @@ const VerifyEmailFailure = () => {
                             Email verification failed!
                         </h2>
                         <p className="text-center text-secondary text-sm">
-                            We couldn’t verify your email address. Please try again or request a new verification link.
+                            We couldn’t verify your email address. Please try again or request a new
+                            verification link.
                         </p>
                     </CardHeader>
 
@@ -66,8 +67,9 @@ const VerifyEmailFailure = () => {
                                             Verification failed
                                         </p>
                                         <p className="text-red-200 text-xs mt-1">
-                                            The verification link may have expired or already been used. 
-                                            Please request a new link from your account settings.
+                                            The verification link may have expired or already been
+                                            used. Please request a new link from your account
+                                            settings.
                                         </p>
                                     </div>
                                 </div>
@@ -116,7 +118,7 @@ const VerifyEmailFailure = () => {
                 {/* Footer */}
                 <div className="mt-8 text-center">
                     <p className="text-xs text-secondary">
-                        © 2024 Cinestech. All rights reserved.
+                        © 2025 Cinestech. All rights reserved.
                     </p>
                 </div>
             </div>

@@ -1,3 +1,5 @@
+import { useAuthStore } from '@/features/auth/stores/auth.store'
+import { useBookingStore } from '../stores/booking.store'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import {
     Calendar,
@@ -194,6 +196,9 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
         selectedCinema
     )
 
+    const { isAuthenticated } = useAuthStore()
+    const { setBookingState } = useBookingStore()
+
     // Available dates from showtimes
     const availableDates = useMemo(() => {
         return showTimeDays.map((day: ShowTimeDay) => ({
@@ -229,14 +234,21 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
     }
 
     const handleShowtimeSelect = (showtimeId: string) => {
-        // Navigate to booking page immediately
-        navigate({
-            to: '/booking/$movieId/$showtimeId',
-            params: {
-                movieId: movieId,
-                showtimeId: showtimeId
-            }
-        })
+        const token = localStorage.getItem('accessToken')
+        if (!isAuthenticated && !token) {
+            setBookingState({
+                movieId,
+                showtimeId,
+                redirectUrl: '/booking'
+            })
+            navigate({ to: '/login' })
+        } else {
+            setBookingState({
+                movieId,
+                showtimeId
+            })
+            navigate({ to: '/booking' })
+        }
     }
 
     const selectedCinemaName = branches.find((b) => b.id === selectedCinema)?.name || 'Cinema'

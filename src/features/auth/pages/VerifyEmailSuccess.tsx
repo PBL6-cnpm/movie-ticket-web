@@ -45,10 +45,10 @@ const VerifyEmailSuccess = () => {
                             Email Verified Successfully!
                         </h2>
                         <p className="text-center text-secondary text-sm">
-                            { email ? (
+                            {email ? (
                                 <>
                                     Your email{' '}
-                                    <span className="text-brand-primary font-medium">{ email }</span>{' '}
+                                    <span className="text-brand-primary font-medium">{email}</span>{' '}
                                     has been successfully verified
                                 </>
                             ) : (
@@ -139,7 +139,7 @@ const VerifyEmailSuccess = () => {
                 {/* Footer */}
                 <div className="mt-8 text-center">
                     <p className="text-xs text-secondary">
-                        © 2024 Cinestech. All rights reserved.
+                        © 2025 Cinestech. All rights reserved.
                     </p>
                 </div>
             </div>
