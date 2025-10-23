@@ -34,7 +34,9 @@ const EmailVerificationSuccess = () => {
             }
         } catch (error) {
             console.error('Failed to resend email:', error)
-            toast.error('Failed to send verification email. Please try again.', { position: 'top-right' })
+            toast.error('Failed to send verification email. Please try again.', {
+                position: 'top-right'
+            })
         } finally {
             setIsResending(false)
         }
@@ -212,7 +214,7 @@ const EmailVerificationSuccess = () => {
                 {/* Footer */}
                 <div className="mt-8 text-center">
                     <p className="text-xs text-secondary">
-                        © 2024 Cinestech. All rights reserved.
+                        © 2025 Cinestech. All rights reserved.
                     </p>
                 </div>
             </div>

@@ -1,4 +1,6 @@
+import { useBookingStore } from '@/features/movies/stores/booking.store'
 import * as authApi from '@/shared/api/auth-api'
+import { useNavigate } from '@tanstack/react-router'
 import type { CredentialResponse } from '@react-oauth/google'
 import { useAuthStore } from '../stores/auth.store'
 import type { Account } from '../types/account.type'
@@ -28,6 +30,9 @@ export const useAuth = () => {
         clearError
     } = useAuthStore()
 
+    const { redirectUrl, clearBookingState } = useBookingStore()
+    const navigate = useNavigate()
+
     const handleLogin = async (
         credentials: LoginCredentials
     ): Promise<AxiosSuccessResponse<Account | string> | AxiosErrorResponse> => {
@@ -51,6 +56,13 @@ export const useAuth = () => {
             console.log('Login successful:', data)
 
             login(data.account, data.accessToken)
+
+            if (redirectUrl) {
+                navigate({ to: redirectUrl })
+                clearBookingState()
+            } else {
+                navigate({ to: '/' })
+            }
 
             if (data.message) {
                 return {
@@ -100,6 +112,13 @@ export const useAuth = () => {
             console.log('Login successful:', data)
 
             login(data.account, data.accessToken)
+
+            if (redirectUrl) {
+                navigate({ to: redirectUrl })
+                clearBookingState()
+            } else {
+                navigate({ to: '/' })
+            }
 
             return {
                 success: true,

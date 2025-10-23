@@ -4,10 +4,8 @@ import BookingPage from '../pages/BookingPage'
 
 export const bookingRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/booking/$movieId/$showtimeId',
+    path: '/booking',
     component: () => {
-        // Get params from the route context
-        const params = bookingRoute.useParams()
-        return <BookingPage movieId={params.movieId} showtimeId={params.showtimeId} />
+        return <BookingPage />
     }
 })

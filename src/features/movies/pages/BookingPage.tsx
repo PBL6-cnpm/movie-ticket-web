@@ -1,32 +1,36 @@
 import { useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Calendar, Clock, Minus, Plus, Users } from 'lucide-react'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useMovieShowTimes } from '../../home/hooks/useBookingApi'
 import SeatSelection from '../components/SeatSelection'
 import { useMovieDetail } from '../hooks/useMovieDetail'
 import { useRefreshments } from '../hooks/useRefreshments'
 import { useSelectedSeatsInfo } from '../hooks/useSelectedSeatsInfo'
+import { useBookingStore } from '../stores/booking.store'
 import type { SelectedRefreshment } from '../types/refreshment.types'
 
-interface BookingPageProps {
-    movieId: string
-    showtimeId: string
-}
-
-const BookingPage: React.FC<BookingPageProps> = ({ movieId, showtimeId }) => {
+const BookingPage: React.FC = () => {
     const navigate = useNavigate()
+    const { movieId, showtimeId } = useBookingStore()
 
     const [selectedSeats, setSelectedSeats] = useState<string[]>([])
     const [selectedRefreshments, setSelectedRefreshments] = useState<SelectedRefreshment[]>([])
 
-    // Fetch movie details
-    const { data: movie, isLoading: movieLoading } = useMovieDetail(movieId)
-    const { data: showTimes = [] } = useMovieShowTimes(movieId)
+    // Fetch movie details - Hooks are now at the top level
+    const { data: movie, isLoading: movieLoading } = useMovieDetail(movieId || '')
+    const { data: showTimes = [] } = useMovieShowTimes(movieId || '')
     const { data: refreshmentsData, isLoading: refreshmentsLoading } = useRefreshments()
     const { totalCost: seatsTotalCost, selectedSeatsInfo } = useSelectedSeatsInfo(
-        showtimeId,
+        showtimeId || '',
         selectedSeats
     )
+
+    // Effect for redirecting if data is missing
+    useEffect(() => {
+        if (!movieId || !showtimeId) {
+            navigate({ to: '/' })
+        }
+    }, [movieId, showtimeId, navigate])
 
     // Calculate total cost including refreshments
     const refreshmentsTotalCost = useMemo(() => {
@@ -103,7 +107,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ movieId, showtimeId }) => {
         alert(confirmMessage)
     }
 
-    if (movieLoading) {
+    if (!movieId || !showtimeId || movieLoading) {
         return (
             <div className="min-h-screen bg-[#1a2232] flex items-center justify-center">
                 <div className="text-white">Đang tải...</div>
