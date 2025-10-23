@@ -3,12 +3,12 @@
 import Button from '@/shared/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useAuth } from '../hooks/auth.hook'
-import { getRedirectPathByRole } from '../utils/role.util'
 import type { Account } from '../types/account.type'
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
+import { getRedirectPathByRole } from '../utils/role.util'
 
 const LoginForm = () => {
     const [email, setEmail] = useState('')
@@ -250,12 +250,14 @@ const LoginForm = () => {
 
                         <GoogleLogin
                             onSuccess={handleSubmitGoogle}
-                            onError={() => { console.log('Login Failed'); }}
+                            onError={() => {
+                                console.log('Login Failed')
+                            }}
                             useOneTap
-                            theme='filled_blue'
-                            size='large'
-                            text='signin_with'
-                            shape='rectangular'
+                            theme="filled_blue"
+                            size="large"
+                            text="signin_with"
+                            shape="rectangular"
                         />
 
                         <div className="text-center">
@@ -279,7 +281,7 @@ const LoginForm = () => {
                 {/* Footer */}
                 <div className="mt-8 text-center">
                     <p className="text-xs text-secondary">
-                        © 2024 Cinestech. All rights reserved.
+                        © 2025 Cinestech. All rights reserved.
                     </p>
                 </div>
             </div>

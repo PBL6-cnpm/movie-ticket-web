@@ -17,10 +17,6 @@ const authRequestInterceptor = (config: InternalAxiosRequestConfig) => {
     if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`
     }
-    const apiToken = import.meta.env.VITE_API_TOKEN
-    if (apiToken && config.headers) {
-        config.headers.authorization = apiToken
-    }
 
     return config
 }

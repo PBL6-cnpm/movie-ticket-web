@@ -1,13 +1,15 @@
 import type { Movie } from '@/shared/data/mockMovies'
-import React, { useRef, useState } from 'react'
+import { Link } from '@tanstack/react-router'
+import React, { useEffect, useRef, useState } from 'react'
 import MovieCard from './MovieCard'
 
 interface MovieSliderProps {
     movies: Movie[]
     cardSize?: 'small' | 'medium' | 'large'
+    viewAllUrl?: string
 }
 
-const MovieSlider: React.FC<MovieSliderProps> = ({ movies, cardSize = 'medium' }) => {
+const MovieSlider: React.FC<MovieSliderProps> = ({ movies, cardSize = 'medium', viewAllUrl }) => {
     const sliderRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(true)
@@ -23,16 +25,26 @@ const MovieSlider: React.FC<MovieSliderProps> = ({ movies, cardSize = 'medium' }
     const scrollLeft = () => {
         if (sliderRef.current) {
             sliderRef.current.scrollBy({ left: -400, behavior: 'smooth' })
-            setTimeout(checkScrollButtons, 300)
         }
     }
 
     const scrollRight = () => {
         if (sliderRef.current) {
             sliderRef.current.scrollBy({ left: 400, behavior: 'smooth' })
-            setTimeout(checkScrollButtons, 300)
         }
     }
+
+    useEffect(() => {
+        const handleScroll = () => checkScrollButtons()
+        const slider = sliderRef.current
+        slider?.addEventListener('scroll', handleScroll)
+
+        checkScrollButtons()
+
+        return () => {
+            slider?.removeEventListener('scroll', handleScroll)
+        }
+    }, [movies])
 
     return (
         <div className="relative">
@@ -49,12 +61,7 @@ const MovieSlider: React.FC<MovieSliderProps> = ({ movies, cardSize = 'medium' }
                     aria-label="Scroll left"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 19l-7-7 7-7"
-                        />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
                 <button
@@ -68,12 +75,7 @@ const MovieSlider: React.FC<MovieSliderProps> = ({ movies, cardSize = 'medium' }
                     aria-label="Scroll right"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                        />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
             </div>
@@ -82,18 +84,36 @@ const MovieSlider: React.FC<MovieSliderProps> = ({ movies, cardSize = 'medium' }
             <div
                 ref={sliderRef}
                 className="flex gap-4 overflow-x-auto scrollbar-hide"
-                style={{
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                    WebkitOverflowScrolling: 'touch'
-                }}
-                onScroll={checkScrollButtons}
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 {movies.map((movie) => (
                     <div key={movie.id} className="flex-shrink-0">
                         <MovieCard movie={movie} size={cardSize} />
                     </div>
                 ))}
+                {viewAllUrl && (
+                    <div className="flex-shrink-0 flex items-center justify-center">
+                        <Link
+                            to={viewAllUrl}
+                            className="flex flex-col items-center justify-center w-48 h-full bg-[#242b3d] rounded-2xl text-white hover:bg-[#fe7e32] transition-all duration-300 group"
+                        >
+                            <svg
+                                className="w-12 h-12 mb-2 text-[#fe7e32] group-hover:text-white transition-colors duration-300"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            <span className="font-semibold">View All</span>
+                        </Link>
+                    </div>
+                )}
             </div>
 
             {/* Gradient Fade Effects */}

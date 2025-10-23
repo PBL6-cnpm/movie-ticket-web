@@ -1,4 +1,6 @@
-import { useSearch } from '@tanstack/react-router'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
+import { useBookingStore } from '@/features/movies/stores/booking.store'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Calendar, CheckCircle2, ChevronDown, Clock, Film, MapPin, Sparkles } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 
@@ -20,7 +22,6 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
     const searchParams = useSearch({ from: homeRoute.id })
     const autoNavigate = useAutoNavigate()
 
-    const [isBooking, setIsBooking] = useState(false)
     const [focusedField, setFocusedField] = useState<string | null>(null)
 
     const branchId = 'branchId' in searchParams ? String(searchParams.branchId) : undefined
@@ -54,25 +55,38 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
         return selectedDay?.times || []
     }, [showTimeDays, date])
 
+    const { isAuthenticated } = useAuthStore()
+    const { setBookingState } = useBookingStore()
+    const navigate = useNavigate()
+
     const handleBooking = async () => {
         if (!branchId || !movieId || !date || !showtimeId) {
             alert('Please select all fields!')
             return
         }
 
-        setIsBooking(true)
+        const token = localStorage.getItem('accessToken')
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500))
+        if (!isAuthenticated && !token) {
+            setBookingState({
+                branchId,
+                movieId,
+                date,
+                showtimeId,
+                redirectUrl: '/booking'
+            })
+            navigate({ to: '/login' })
+            return
+        }
 
-        console.log('Booking:', {
-            cinema: branchId,
-            movie: movieId,
-            date: date,
-            showtime: showtimeId
+        setBookingState({
+            branchId,
+            movieId,
+            date,
+            showtimeId
         })
 
-        setIsBooking(false)
+        navigate({ to: '/booking' })
     }
 
     const isFormComplete = branchId && movieId && date && showtimeId
@@ -345,25 +359,18 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                             >
                                 <button
                                     onClick={handleBooking}
-                                    disabled={!isFormComplete || isBooking}
+                                    disabled={!isFormComplete}
                                     className={`relative w-full py-2.5 px-4 rounded-lg font-bold text-sm overflow-hidden transition-all duration-300 ${
-                                        isFormComplete && !isBooking
+                                        isFormComplete
                                             ? 'bg-gradient-to-r from-[#fe7e32] to-[#648ddb] text-white shadow-lg shadow-[#fe7e32]/30 hover:shadow-xl hover:shadow-[#fe7e32]/40 hover:scale-[1.02] active:scale-[0.98]'
                                             : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                                     }`}
                                 >
                                     <span className="relative z-10 flex items-center justify-center gap-2">
-                                        {isBooking ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                <span>Processing...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Film className="w-4 h-4" />
-                                                <span>Book Now</span>
-                                            </>
-                                        )}
+                                        <>
+                                            <Film className="w-4 h-4" />
+                                            <span>Book Now</span>
+                                        </>
                                     </span>
                                 </button>
                             </div>

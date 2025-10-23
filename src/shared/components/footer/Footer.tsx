@@ -118,7 +118,6 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="text-lg font-semibold text-primary mb-4">Services</h3>
                         <ul className="space-y-2">
-                           
                             <li>
                                 <a
                                     href="#"
@@ -190,16 +189,13 @@ const Footer: React.FC = () => {
                                     Terms & Conditions
                                 </a>
                             </li>
-                          
                         </ul>
                     </div>
                 </div>
 
                 {/* Copyright */}
                 <div className="border-t border-surface mt-8 pt-6 text-center">
-                    <p className="text-sm text-secondary">
-                        2024 CinesTech - All Rights Reserved
-                    </p>
+                    <p className="text-sm text-secondary">2025 CinesTech - All Rights Reserved</p>
                 </div>
             </div>
         </footer>
