@@ -1,5 +1,4 @@
 import { useAuthStore } from '@/features/auth/stores/auth.store'
-import { useBookingStore } from '../stores/booking.store'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import {
     Calendar,
@@ -14,11 +13,13 @@ import {
     Users,
     X
 } from 'lucide-react'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
+import { useBookingStore } from '../stores/booking.store'
 
 // UTILITIES & HOOKS
 import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
+import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
 import {
     useBranches,
     useBranchMovieShowTimes,
@@ -473,18 +474,21 @@ const MovieDetailPage: React.FC = () => {
     const { data: movie, isLoading, error } = useMovieDetail(movieId)
     const [showTrailer, setShowTrailer] = useState(false)
 
+    // Scroll to top when component mounts to prevent auto-scroll to bottom
+    useScrollToTop()
+
     // Scroll lock effect for modal
-    useEffect(() => {
-        if (showTrailer) {
-            document.body.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = ''
-        }
-        // Cleanup function
-        return () => {
-            document.body.style.overflow = ''
-        }
-    }, [showTrailer])
+    // useEffect(() => {
+    //     if (showTrailer) {
+    //         document.body.style.overflow = 'hidden'
+    //     } else {
+    //         document.body.style.overflow = ''
+    //     }
+    //     // Cleanup function
+    //     return () => {
+    //         document.body.style.overflow = ''
+    //     }
+    // }, [showTrailer])
 
     if (isLoading)
         return (

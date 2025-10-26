@@ -18,7 +18,11 @@
     :root {
         --brand-primary: 254 89% 62%;
         --brand-secondary: 334 94% 65%;
-        --brand-gradient: linear-gradient(to right, hsl(var(--brand-primary)), hsl(var(--brand-secondary)));
+        --brand-gradient: linear-gradient(
+            to right,
+            hsl(var(--brand-primary)),
+            hsl(var(--brand-secondary))
+        );
         --brand-surface: 224 32% 14%;
         --brand-text: 0 0% 100%;
     }
@@ -88,6 +92,21 @@
     .animate-jump-out {
         animation: jump-out 0.4s ease-in forwards;
     }
+
+    .animate-scale-in {
+        animation: scaleIn 0.3s ease-out;
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
 }
 
 .animate-fade-in-right {
@@ -96,7 +115,6 @@
 
 /* Apply global styles */
 html {
-    scroll-behavior: smooth;
 }
 
 body {
