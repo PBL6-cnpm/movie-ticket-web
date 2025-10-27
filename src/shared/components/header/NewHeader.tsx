@@ -95,7 +95,7 @@ const NewHeader: React.FC = () => {
                                         <img
                                             src={account.avatarUrl || '/default-avatar.png'}
                                             alt="User"
-                                            className="w-9 h-9 rounded-full object-cover"
+                                            className="w-9 h-9 rounded-full object-cover cursor-pointer"
                                         />
                                         <ChevronDown
                                             className={`w-4 h-4 text-gray-400 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`}
