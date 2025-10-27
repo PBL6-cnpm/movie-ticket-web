@@ -11,6 +11,24 @@ export const apiClient = Axios.create({
     }
 })
 
+// Prevent multiple refresh token requests
+let isRefreshing = false
+let failedQueue: Array<{
+    resolve: (value?: unknown) => void
+    reject: (reason?: unknown) => void
+}> = []
+
+const processQueue = (error: unknown, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error)
+        } else {
+            prom.resolve(token)
+        }
+    })
+    failedQueue = []
+}
+
 const authRequestInterceptor = (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('accessToken')
 
@@ -21,18 +39,13 @@ const authRequestInterceptor = (config: InternalAxiosRequestConfig) => {
     return config
 }
 
-// const responseInterceptor = (response: AxiosResponse) => {
-//     const backendResponse = response.data
-
-//     if (backendResponse && backendResponse.success) {
-//         return Promise.resolve(backendResponse)
-//     } else {
-//         return Promise.reject(backendResponse)
-//     }
-// }
-
 const errorInterceptor = async (error: AxiosError) => {
-    console.log('API Error Interceptor triggered:', error)
+    console.log('API Error Interceptor triggered:', {
+        status: error.response?.status,
+        url: error.config?.url,
+        message: error.message
+    })
+
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
     let errorObject = {
@@ -50,19 +63,45 @@ const errorInterceptor = async (error: AxiosError) => {
             statusCode: error.response.status
         }
 
-        // Handle token expiration (401 )
-        if (error.response.status === HttpStatusCode.Unauthorized && !originalRequest._retry) {
+        // Handle token expiration (401)
+        if (
+            error.response.status === HttpStatusCode.Unauthorized && 
+            !originalRequest._retry &&
+            originalRequest.url !== '/auth/refresh-tokens' // Don't retry refresh endpoint
+        ) {
+            if (isRefreshing) {
+                // Queue this request while refresh is in progress
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject })
+                })
+                    .then((token) => {
+                        if (originalRequest.headers && token) {
+                            originalRequest.headers.Authorization = `Bearer ${token}`
+                        }
+                        return apiClient(originalRequest)
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err)
+                    })
+            }
+
             originalRequest._retry = true
+            isRefreshing = true
 
             try {
+                console.log('Attempting to refresh token...')
+
                 // Create a separate Axios instance to avoid infinite loop
                 const refreshClient = Axios.create({
                     baseURL: import.meta.env.VITE_BASE_URL,
                     withCredentials: true,
+                    timeout: 10000,
                     headers: { 'Content-Type': 'application/json' }
                 })
 
                 const refreshResponse = await refreshClient.post('/auth/refresh-tokens', {})
+                console.log('Refresh token response:', refreshResponse.status)
+
                 const tokenData = refreshResponse.data?.data
 
                 // Update token in localStorage and Zustand store
@@ -70,15 +109,27 @@ const errorInterceptor = async (error: AxiosError) => {
                     const { updateAccessToken } = useAuthStore.getState()
                     updateAccessToken(tokenData.accessToken)
 
+                    console.log('Token refreshed successfully')
+
+                    // Process queued requests
+                    processQueue(null, tokenData.accessToken)
+
                     // Update token in original request
                     if (originalRequest.headers) {
                         originalRequest.headers.Authorization = `Bearer ${tokenData.accessToken}`
                     }
-                }
 
-                // Retry request with new token
-                return await apiClient(originalRequest)
-            } catch (retryError) {
+                    // Retry request with new token
+                    return await apiClient(originalRequest)
+                } else {
+                    throw new Error('No access token in refresh response')
+                }
+            } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError)
+
+                // Process queued requests with error
+                processQueue(refreshError, null)
+
                 // If refresh token fails, log out user
                 const { logout } = useAuthStore.getState()
                 logout()
@@ -88,7 +139,9 @@ const errorInterceptor = async (error: AxiosError) => {
                     window.location.href = '/login'
                 }
 
-                return Promise.reject(retryError)
+                return Promise.reject(refreshError)
+            } finally {
+                isRefreshing = false
             }
         }
     } else if (error.request) {
@@ -102,8 +155,9 @@ const errorInterceptor = async (error: AxiosError) => {
 
 apiClient.interceptors.request.use(authRequestInterceptor)
 
-// Temporarily disable response interceptor for debugging
-// apiClient.interceptors.response.use(responseInterceptor, errorInterceptor)
-apiClient.interceptors.response.use((response) => {
-    return response
-}, errorInterceptor)
+apiClient.interceptors.response.use(
+    (response) => {
+        return response
+    },
+    errorInterceptor
+)
