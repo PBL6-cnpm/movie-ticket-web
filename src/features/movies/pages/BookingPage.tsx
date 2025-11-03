@@ -1,20 +1,22 @@
+import SeatSelection from '@/features/movies/components/SeatSelection'
+import VoucherModal from '@/features/movies/components/VoucherModal'
+import { useMovieDetail } from '@/features/movies/hooks/useMovieDetail'
+import { useRefreshments } from '@/features/movies/hooks/useRefreshments'
+import { useSelectedSeatsInfo } from '@/features/movies/hooks/useSelectedSeatsInfo'
+import { usePublicVouchers } from '@/features/movies/hooks/useVouchers'
+import { useBookingStore } from '@/features/movies/stores/booking.store'
+import type { SelectedRefreshment } from '@/features/movies/types/refreshment.types'
+import type { AppliedVoucher, Voucher } from '@/features/movies/types/voucher.types'
+import { useCreatePaymentIntent } from '@/features/payment/hooks/usePayment'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Calendar, Clock, Minus, Plus, Tag, Users } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Loader2, Minus, Plus, Tag, Users } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
 import { useMovieShowTimes } from '../../home/hooks/useBookingApi'
-import SeatSelection from '../components/SeatSelection'
-import VoucherModal from '../components/VoucherModal'
-import { useMovieDetail } from '../hooks/useMovieDetail'
-import { useRefreshments } from '../hooks/useRefreshments'
-import { useSelectedSeatsInfo } from '../hooks/useSelectedSeatsInfo'
-import { usePublicVouchers } from '../hooks/useVouchers'
-import { useBookingStore } from '../stores/booking.store'
-import type { SelectedRefreshment } from '../types/refreshment.types'
-import type { AppliedVoucher, Voucher } from '../types/voucher.types'
 
 const BookingPage: React.FC = () => {
+    console.log('=== BookingPage mounted ===')
     const navigate = useNavigate()
     const { movieId, showtimeId } = useBookingStore()
 
@@ -23,10 +25,8 @@ const BookingPage: React.FC = () => {
     const [showVoucherModal, setShowVoucherModal] = useState(false)
     const [appliedVoucher, setAppliedVoucher] = useState<AppliedVoucher | null>(null)
 
-    // Scroll to top when component mounts to prevent auto-scroll to bottom
     useScrollToTop()
 
-    // Fetch movie details - Hooks are now at the top level
     const { data: movie, isLoading: movieLoading } = useMovieDetail(movieId || '')
     const { data: showTimes = [] } = useMovieShowTimes(movieId || '')
     const { data: refreshmentsData, isLoading: refreshmentsLoading } = useRefreshments()
@@ -35,66 +35,50 @@ const BookingPage: React.FC = () => {
         selectedSeats
     )
     const { data: vouchersData, isLoading: vouchersLoading } = usePublicVouchers()
+    const createPaymentIntentMutation = useCreatePaymentIntent()
 
-    // Effect for redirecting if data is missing
     useEffect(() => {
-        if (!movieId || !showtimeId) {
+        if (!movieLoading && (!movieId || !showtimeId)) {
+            console.warn('Missing booking info in store, redirecting to home.')
             navigate({ to: '/' })
         }
-    }, [movieId, showtimeId, navigate])
+    }, [movieId, showtimeId, navigate, movieLoading])
 
-    // Calculate total cost including refreshments
     const refreshmentsTotalCost = useMemo(() => {
-        return selectedRefreshments.reduce((total, item) => {
-            return total + item.refreshment.price * item.quantity
-        }, 0)
+        return selectedRefreshments.reduce(
+            (total, item) => total + item.refreshment.price * item.quantity,
+            0
+        )
     }, [selectedRefreshments])
 
     const subtotalCost = seatsTotalCost + refreshmentsTotalCost
     const voucherDiscount = appliedVoucher?.appliedDiscount || 0
     const totalCost = subtotalCost - voucherDiscount
 
-    // Voucher functions
     const calculateVoucherDiscount = (voucher: Voucher, amount: number): number => {
-        // Check minimum order value
-        if (voucher.minimumOrderValue && amount < voucher.minimumOrderValue) {
-            return 0
-        }
-
+        if (voucher.minimumOrderValue && amount < voucher.minimumOrderValue) return 0
         let discount = 0
-
         if (voucher.discountValue) {
-            // Fixed discount
             discount = voucher.discountValue
         } else if (voucher.discountPercent) {
-            // Percentage discount
             discount = (amount * voucher.discountPercent) / 100
-
-            // Apply max discount limit if exists
             if (voucher.maxDiscountValue && discount > voucher.maxDiscountValue) {
                 discount = voucher.maxDiscountValue
             }
         }
-
         return discount
     }
 
     const handleApplyVoucher = (voucher: Voucher) => {
         const discount = calculateVoucherDiscount(voucher, subtotalCost)
         if (discount > 0) {
-            setAppliedVoucher({
-                voucher,
-                appliedDiscount: discount
-            })
+            setAppliedVoucher({ voucher, appliedDiscount: discount })
             setShowVoucherModal(false)
         }
     }
 
-    const handleRemoveVoucher = () => {
-        setAppliedVoucher(null)
-    }
+    const handleRemoveVoucher = () => setAppliedVoucher(null)
 
-    // Find current showtime details
     const currentShowtime = showTimes
         .flatMap((day) => day.times)
         .find((time) => time.id === showtimeId)
@@ -108,62 +92,69 @@ const BookingPage: React.FC = () => {
     const handleRefreshmentQuantityChange = (refreshmentId: string, change: number) => {
         setSelectedRefreshments((prev) => {
             const existingIndex = prev.findIndex((item) => item.refreshment.id === refreshmentId)
-
             if (existingIndex >= 0) {
                 const newQuantity = prev[existingIndex].quantity + change
-                if (newQuantity <= 0) {
-                    return prev.filter((_, index) => index !== existingIndex)
-                }
-                return prev.map((item, index) =>
-                    index === existingIndex ? { ...item, quantity: newQuantity } : item
-                )
-            } else if (change > 0 && refreshmentsData) {
+                return newQuantity <= 0
+                    ? prev.filter((_, index) => index !== existingIndex)
+                    : prev.map((item, index) =>
+                          index === existingIndex ? { ...item, quantity: newQuantity } : item
+                      )
+            }
+            if (change > 0 && refreshmentsData) {
                 const refreshment = refreshmentsData.items.find((r) => r.id === refreshmentId)
-                if (refreshment) {
-                    return [...prev, { refreshment, quantity: change }]
-                }
+                if (refreshment) return [...prev, { refreshment, quantity: change }]
             }
             return prev
         })
     }
 
-    const handleBookingConfirm = () => {
-        if (selectedSeats.length === 0) return
+    const handleBookingConfirm = async () => {
+        console.log('Starting booking confirmation...')
 
-        // Log booking details
-        console.log('🎫 BOOKING CONFIRMED:', {
-            movieId,
-            movieName: movie?.name,
-            showtimeId,
-            showtimeTime: currentShowtime?.time,
-            selectedSeats,
-            selectedSeatsInfo,
-            selectedRefreshments,
-            seatsTotalCost,
-            refreshmentsTotalCost,
-            totalCost
-        })
-
-        // Build confirmation message
-        let confirmMessage = `Đặt vé thành công!\nPhim: ${movie?.name}\nSuất chiếu: ${currentShowtime?.time}\nGhế: ${selectedSeats.join(', ')}`
-
-        if (selectedRefreshments.length > 0) {
-            confirmMessage += '\n\nĐồ ăn & thức uống:'
-            selectedRefreshments.forEach((item) => {
-                confirmMessage += `\n- ${item.refreshment.name} x${item.quantity}: ${(item.refreshment.price * item.quantity).toLocaleString('vi-VN')} VNĐ`
-            })
+        if (selectedSeats.length === 0) {
+            alert('Please select at least one seat')
+            return
         }
 
-        confirmMessage += `\n\nTổng tiền: ${totalCost.toLocaleString('vi-VN')} VNĐ`
+        try {
+            console.log('Creating payment intent...')
+            const tempBookingId = '8fd48aed-f084-4a76-85b5-27be4be25f95'
 
-        // TODO: Implement actual booking API call
-        alert(confirmMessage)
+            const paymentResult = await createPaymentIntentMutation.mutateAsync({
+                bookingId: tempBookingId
+            })
+
+            console.log('Payment Intent API response:', paymentResult)
+
+            const clientSecret = paymentResult?.data?.clientSecret
+
+            // Validate clientSecret
+            if (!clientSecret || typeof clientSecret !== 'string') {
+                console.error('Invalid or missing client secret:', paymentResult)
+                alert('Unable to initialize payment. Please try again.')
+                return
+            }
+
+            sessionStorage.setItem('payment_client_secret', clientSecret)
+
+            console.log('Navigating to /payment...')
+            await navigate({ to: '/payment' })
+        } catch (error) {
+            console.error('Error creating payment intent:', error)
+
+            // Hiển thị error message cụ thể hơn
+            if (error instanceof Error) {
+                alert(`Failed to proceed to payment: ${error.message}`)
+            } else {
+                alert('Failed to proceed to payment. Please try again.')
+            }
+        }
     }
 
-    if (!movieId || !showtimeId || movieLoading) {
+    if (movieLoading) {
         return (
             <div className="min-h-screen bg-[#1a2232] flex items-center justify-center">
-                <div className="text-white">Đang tải...</div>
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
             </div>
         )
     }
@@ -171,16 +162,27 @@ const BookingPage: React.FC = () => {
     if (!movie) {
         return (
             <div className="min-h-screen bg-[#1a2232] flex items-center justify-center">
-                <div className="text-white">Không tìm thấy phim</div>
+                <div className="text-white text-center">
+                    <p className="text-xl">Movie not found</p>
+                    <p className="text-gray-400">Your booking session might have expired.</p>
+                </div>
             </div>
         )
     }
 
+    const formatDuration = (minutes: number): string => {
+        const hours = Math.floor(minutes / 60)
+        const mins = minutes % 60
+        
+        if (hours === 0) return `${mins}m`
+        if (mins === 0) return `${hours}h`
+        return `${hours}h ${mins}m`
+    }
     return (
         <PageTransition>
             <div className="min-h-screen bg-[#1a2232] text-white">
                 {/* Header */}
-                <div className="sticky top-0 z-50 bg-[#1a2232]/95 backdrop-blur-sm border-b border-white/10">
+                <header className="sticky top-0 z-50 bg-[#1a2232]/95 backdrop-blur-sm border-b border-white/10">
                     <div className="container mx-auto px-4 py-4">
                         <div className="flex items-center justify-between">
                             <button
@@ -188,18 +190,18 @@ const BookingPage: React.FC = () => {
                                 className="flex items-center gap-2 text-white hover:text-[#fe7e32] transition-colors"
                             >
                                 <ArrowLeft className="w-5 h-5" />
-                                Quay lại
+                                Back
                             </button>
                             <h1 className="text-xl font-bold">Book Ticket</h1>
-                            <div className="w-20" /> {/* Spacer for centering */}
+                            <div className="w-20" />
                         </div>
                     </div>
-                </div>
+                </header>
 
-                <div className="container mx-auto px-4 py-6">
+                <main className="container mx-auto px-4 py-6">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         {/* Movie Info Sidebar */}
-                        <div className="lg:col-span-1">
+                        <aside className="lg:col-span-1">
                             <div className="bg-[#242b3d] rounded-2xl p-6 sticky top-24">
                                 <div className="flex items-start gap-4 mb-6">
                                     <img
@@ -214,8 +216,7 @@ const BookingPage: React.FC = () => {
                                         <div className="space-y-2 text-sm">
                                             <div className="flex items-center gap-2 text-[#cccccc]">
                                                 <Clock className="w-4 h-4" />
-                                                {Math.floor(movie.duration / 60)}h{' '}
-                                                {movie.duration % 60}m
+                                                {formatDuration(movie.duration)}
                                             </div>
                                             <div className="flex items-center gap-2 text-[#cccccc]">
                                                 <Users className="w-4 h-4" />T{movie.ageLimit}+
@@ -230,121 +231,104 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Selected Seats Summary */}
-                                {selectedSeats.length > 0 && (
-                                    <div className="border-t border-white/10 pt-6">
-                                        <h3 className="text-sm font-semibold text-[#fe7e32] mb-3">
-                                            Selected Seats ({selectedSeats.length})
-                                        </h3>
-                                        <div className="space-y-2 mb-4">
-                                            {selectedSeatsInfo.map((seat) => (
-                                                <div
-                                                    key={seat.name}
-                                                    className="flex justify-between items-center text-sm"
-                                                >
-                                                    <span className="text-white">{seat.name}</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[#cccccc]">
-                                                            {seat.type.name}
-                                                        </span>
-                                                        <span className="text-[#fe7e32] font-medium">
-                                                            {seat.type.price.toLocaleString(
-                                                                'vi-VN'
-                                                            )}{' '}
-                                                            đ
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Selected Refreshments Summary */}
-                                {selectedRefreshments.length > 0 && (
-                                    <div className="border-t border-white/10 pt-6">
-                                        <h3 className="text-sm font-semibold text-[#fe7e32] mb-3">
-                                            Refreshments ({selectedRefreshments.length})
-                                        </h3>
-                                        <div className="space-y-2 mb-4">
-                                            {selectedRefreshments.map((item) => (
-                                                <div
-                                                    key={item.refreshment.id}
-                                                    className="flex justify-between items-center text-sm"
-                                                >
-                                                    <span className="text-white">
-                                                        {item.refreshment.name}
-                                                    </span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[#cccccc]">
-                                                            x{item.quantity}
-                                                        </span>
-                                                        <span className="text-[#fe7e32] font-medium">
-                                                            {(
-                                                                item.refreshment.price *
-                                                                item.quantity
-                                                            ).toLocaleString('vi-VN')}{' '}
-                                                            đ
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Total Summary */}
+                                {/* Summary sections */}
                                 {(selectedSeats.length > 0 || selectedRefreshments.length > 0) && (
-                                    <div className="border-t border-white/10 pt-3">
+                                    <>
                                         {selectedSeats.length > 0 && (
-                                            <div className="flex justify-between items-center text-sm mb-2">
-                                                <span className="text-[#cccccc]">
-                                                    Movie Tickets:
-                                                </span>
-                                                <span className="text-white">
-                                                    {seatsTotalCost.toLocaleString('vi-VN')} đ
-                                                </span>
+                                            <div className="border-t border-white/10 pt-6">
+                                                <h3 className="text-sm font-semibold text-[#fe7e32] mb-3">
+                                                    Selected Seats ({selectedSeats.length})
+                                                </h3>
+                                                <div className="space-y-2 mb-4">
+                                                    {selectedSeatsInfo.map((seat) => (
+                                                        <div
+                                                            key={seat.name}
+                                                            className="flex justify-between items-center text-sm"
+                                                        >
+                                                            <span className="text-white">
+                                                                {seat.name}
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[#cccccc]">
+                                                                    {seat.type.name}
+                                                                </span>
+                                                                <span className="text-[#fe7e32] font-medium">
+                                                                    {seat.type.price.toLocaleString(
+                                                                        'vi-VN'
+                                                                    )}{' '}
+                                                                    đ
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
+
                                         {selectedRefreshments.length > 0 && (
-                                            <div className="flex justify-between items-center text-sm mb-2">
-                                                <span className="text-[#cccccc]">
-                                                    Refreshments:
-                                                </span>
-                                                <span className="text-white">
-                                                    {refreshmentsTotalCost.toLocaleString('vi-VN')}{' '}
-                                                    đ
-                                                </span>
+                                            <div className="border-t border-white/10 pt-6">
+                                                <h3 className="text-sm font-semibold text-[#fe7e32] mb-3">
+                                                    Refreshments
+                                                </h3>
+                                                <div className="space-y-2 mb-4">
+                                                    {selectedRefreshments.map((item) => (
+                                                        <div
+                                                            key={item.refreshment.id}
+                                                            className="flex justify-between items-center text-sm"
+                                                        >
+                                                            <span className="text-white">
+                                                                {item.refreshment.name}
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[#cccccc]">
+                                                                    x{item.quantity}
+                                                                </span>
+                                                                <span className="text-[#fe7e32] font-medium">
+                                                                    {(
+                                                                        item.refreshment.price *
+                                                                        item.quantity
+                                                                    ).toLocaleString('vi-VN')}{' '}
+                                                                    đ
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
-                                        {appliedVoucher && (
-                                            <div className="flex justify-between items-center text-sm mb-2">
-                                                <span className="text-[#cccccc]">
-                                                    Voucher Discount:
+
+                                        <div className="border-t border-white/10 pt-3">
+                                            {appliedVoucher && (
+                                                <div className="flex justify-between items-center text-sm mb-2">
+                                                    <span className="text-[#cccccc]">
+                                                        Voucher Discount:
+                                                    </span>
+                                                    <span className="text-green-400 font-medium">
+                                                        -
+                                                        {appliedVoucher.appliedDiscount.toLocaleString(
+                                                            'vi-VN'
+                                                        )}{' '}
+                                                        đ
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between items-center pt-2 mt-2 border-t border-white/10">
+                                                <span className="font-semibold text-white">
+                                                    Total:
                                                 </span>
-                                                <span className="text-green-400 font-medium">
-                                                    -
-                                                    {appliedVoucher.appliedDiscount.toLocaleString(
-                                                        'vi-VN'
-                                                    )}{' '}
-                                                    đ
+                                                <span className="text-xl font-bold text-[#fe7e32]">
+                                                    {totalCost.toLocaleString('vi-VN')} đ
                                                 </span>
                                             </div>
-                                        )}
-                                        <div className="flex justify-between items-center pt-2 border-t border-white/10">
-                                            <span className="font-semibold text-white">Total:</span>
-                                            <span className="text-xl font-bold text-[#fe7e32]">
-                                                {totalCost.toLocaleString('vi-VN')} đ
-                                            </span>
                                         </div>
-                                    </div>
+                                    </>
                                 )}
 
-                                {/* Voucher Section - Only show when seats are selected */}
+                                {/* Voucher & Booking Button */}
                                 {selectedSeats.length > 0 && (
                                     <div className="mt-6">
                                         {appliedVoucher ? (
-                                            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-4">
+                                            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 mb-4">
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <div className="flex items-center gap-2 mb-1">
@@ -353,14 +337,9 @@ const BookingPage: React.FC = () => {
                                                                 {appliedVoucher.voucher.name}
                                                             </span>
                                                         </div>
-                                                        <div className="text-xs text-green-400">
-                                                            Code: {appliedVoucher.voucher.code} •
-                                                            Save{' '}
-                                                            {appliedVoucher.appliedDiscount.toLocaleString(
-                                                                'vi-VN'
-                                                            )}{' '}
-                                                            đ
-                                                        </div>
+                                                        <p className="text-xs text-green-400">
+                                                            Code: {appliedVoucher.voucher.code}
+                                                        </p>
                                                     </div>
                                                     <button
                                                         onClick={handleRemoveVoucher}
@@ -373,61 +352,56 @@ const BookingPage: React.FC = () => {
                                         ) : (
                                             <button
                                                 onClick={() => setShowVoucherModal(true)}
-                                                disabled={selectedSeats.length === 0}
-                                                className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 bg-[#fe7e32]/10 hover:bg-[#fe7e32]/20 disabled:bg-gray-700/50 text-[#fe7e32] hover:text-white disabled:text-gray-500 rounded-lg transition-all font-medium border-2 border-[#fe7e32]/30 hover:border-[#fe7e32] disabled:border-gray-600/30 disabled:cursor-not-allowed"
+                                                className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 bg-[#fe7e32]/10 hover:bg-[#fe7e32]/20 text-[#fe7e32] hover:text-white rounded-lg transition-all font-medium border-2 border-[#fe7e32]/30 hover:border-[#fe7e32]"
                                             >
                                                 <Tag className="w-5 h-5" />
-                                                {selectedSeats.length === 0
-                                                    ? 'Select seats to use voucher'
-                                                    : 'Apply Voucher & Save Money'}
+                                                Apply Vouchers
                                             </button>
                                         )}
+                                        <button
+                                            onClick={handleBookingConfirm}
+                                            disabled={createPaymentIntentMutation.isPending}
+                                            className="w-full bg-[#fe7e32] hover:bg-[#e56e29] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg disabled:shadow-none transform hover:scale-105 disabled:scale-100 flex items-center justify-center gap-2"
+                                        >
+                                            {createPaymentIntentMutation.isPending ? (
+                                                <>
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                `Book ${selectedSeats.length} Ticket${selectedSeats.length > 1 ? 's' : ''}`
+                                            )}
+                                        </button>
                                     </div>
                                 )}
-
-                                {/* Booking Button */}
-                                <button
-                                    onClick={handleBookingConfirm}
-                                    disabled={selectedSeats.length === 0}
-                                    className="w-full bg-[#fe7e32] hover:bg-[#e56e29] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg disabled:shadow-none transform hover:scale-105 disabled:scale-100"
-                                >
-                                    {selectedSeats.length > 0
-                                        ? `Book ${selectedSeats.length} Tickets`
-                                        : 'Please select seats'}
-                                </button>
                             </div>
-                        </div>
+                        </aside>
 
-                        {/* Main Content - Seat Selection and Refreshments */}
-                        <div className="lg:col-span-3 space-y-8">
-                            {/* Seat Selection */}
+                        {/* Main Content */}
+                        <section className="lg:col-span-3 space-y-8">
                             <SeatSelection
-                                showtimeId={showtimeId}
+                                showtimeId={showtimeId!}
                                 selectedSeats={selectedSeats}
                                 onSeatSelect={handleSeatSelect}
                             />
-
-                            {/* Refreshments Section */}
                             <div className="bg-[#242b3d] rounded-2xl p-6">
                                 <h3 className="text-xl font-bold text-white mb-6">Refreshments</h3>
-
                                 {refreshmentsLoading ? (
                                     <div className="text-center py-8">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#fe7e32] mx-auto"></div>
+                                        <Loader2 className="w-8 h-8 mx-auto animate-spin text-[#fe7e32]" />
                                         <p className="text-[#cccccc] mt-2">Loading...</p>
                                     </div>
                                 ) : refreshmentsData?.items.length ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {refreshmentsData.items.map((refreshment) => {
-                                            const selectedItem = selectedRefreshments.find(
-                                                (item) => item.refreshment.id === refreshment.id
-                                            )
-                                            const quantity = selectedItem?.quantity || 0
-
+                                            const quantity =
+                                                selectedRefreshments.find(
+                                                    (item) => item.refreshment.id === refreshment.id
+                                                )?.quantity || 0
                                             return (
                                                 <div
                                                     key={refreshment.id}
-                                                    className="bg-[#1a2232] rounded-lg p-4 hover:bg-[#1a2232]/80 transition-colors"
+                                                    className="bg-[#1a2232] rounded-lg p-4 flex flex-col"
                                                 >
                                                     <div className="aspect-square mb-3 overflow-hidden rounded-lg">
                                                         <img
@@ -436,14 +410,13 @@ const BookingPage: React.FC = () => {
                                                             className="w-full h-full object-cover"
                                                         />
                                                     </div>
-                                                    <h4 className="text-white font-medium mb-2 text-sm">
+                                                    <h4 className="text-white font-medium mb-2 text-sm flex-grow">
                                                         {refreshment.name}
                                                     </h4>
                                                     <p className="text-[#fe7e32] font-bold mb-3">
                                                         {refreshment.price.toLocaleString('vi-VN')}{' '}
                                                         đ
                                                     </p>
-
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2">
                                                             <button
@@ -473,20 +446,6 @@ const BookingPage: React.FC = () => {
                                                                 <Plus className="w-4 h-4 text-white" />
                                                             </button>
                                                         </div>
-
-                                                        {quantity > 0 && (
-                                                            <div className="text-right">
-                                                                <p className="text-xs text-[#cccccc]">
-                                                                    Total
-                                                                </p>
-                                                                <p className="text-[#fe7e32] font-bold text-sm">
-                                                                    {(
-                                                                        refreshment.price * quantity
-                                                                    ).toLocaleString('vi-VN')}{' '}
-                                                                    đ
-                                                                </p>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             )
@@ -494,13 +453,13 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div className="text-center py-8">
-                                        <p className="text-[#cccccc]">No Refreshments</p>
+                                        <p className="text-[#cccccc]">No Refreshments Available</p>
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </section>
                     </div>
-                </div>
+                </main>
 
                 {/* Voucher Modal */}
                 <VoucherModal
