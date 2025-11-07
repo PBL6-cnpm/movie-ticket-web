@@ -13,7 +13,12 @@ import { moviesRoute } from './features/movies/routes/MoviesRoute'
 import { nowShowingMoviesRoute } from './features/movies/routes/NowShowingMoviesRoute'
 import { upcomingMoviesRoute } from './features/movies/routes/UpcomingMoviesRoute'
 import { paymentRoute, paymentSuccessRoute } from './features/payment/routes'
-import { changePasswordRoute, editProfileRoute, profileRoute } from './features/profile/routes'
+import {
+    bookingHistoryRoute,
+    changePasswordRoute,
+    editProfileRoute,
+    profileRoute
+} from './features/profile/routes'
 import { promotionsRoute } from './features/promotions/routes/PromotionsRoute'
 import { rootRoute } from './shared/routes/__root'
 
@@ -30,6 +35,7 @@ export const routeTree = rootRoute.addChildren([
     movieDetailRoute,
     actorDetailRoute,
     profileRoute.addChildren([editProfileRoute, changePasswordRoute]),
+    bookingHistoryRoute,
     bookingRoute,
     paymentRoute,
     paymentSuccessRoute,

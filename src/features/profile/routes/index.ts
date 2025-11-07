@@ -1,3 +1,4 @@
-export { profileRoute } from './ProfileRoute'
+export { bookingHistoryRoute } from './BookingHistoryRoute'
+export { changePasswordRoute } from './ChangePasswordRoute'
 export { editProfileRoute } from './EditProfileRoute'
-export { changePasswordRoute } from './ChangePasswordRoute';
+export { profileRoute } from './ProfileRoute'
