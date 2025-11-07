@@ -1,17 +1,17 @@
-import { Elements } from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
-import { ArrowLeft, Loader2 } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
 import PaymentForm from '@/features/payment/components/PaymentForm'
 import { useCancelPayment } from '@/features/payment/hooks/usePayment'
 import PageTransition from '@/shared/components/ui/PageTransition'
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+import { Elements } from '@stripe/react-stripe-js'
+import { loadStripe, type Stripe } from '@stripe/stripe-js'
+import { useNavigate } from '@tanstack/react-router'
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 
 const PaymentPage: React.FC = () => {
     const navigate = useNavigate()
     const [clientSecret, setClientSecret] = useState<string | null>(null)
+    const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
+    const [stripeConfigError, setStripeConfigError] = useState<string | null>(null)
     const cancelPaymentMutation = useCancelPayment()
 
     useEffect(() => {
@@ -25,6 +25,28 @@ const PaymentPage: React.FC = () => {
             navigate({ to: '/' })
         }
     }, [navigate])
+
+    useEffect(() => {
+        const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined
+
+        if (!publishableKey || publishableKey.trim().length === 0) {
+            console.error(
+                'Stripe publishable key is missing. Please set VITE_STRIPE_PUBLISHABLE_KEY.'
+            )
+            setStripeConfigError(
+                'Payment service is currently unavailable. Please contact support.'
+            )
+            return
+        }
+
+        try {
+            const promise = loadStripe(publishableKey)
+            setStripePromise(promise)
+        } catch (error) {
+            console.error('Failed to initialize Stripe:', error)
+            setStripeConfigError('Unable to initialize payment securely. Please try again later.')
+        }
+    }, [])
 
     const handleCancelAndGoBack = async () => {
         if (clientSecret) {
@@ -41,10 +63,33 @@ const PaymentPage: React.FC = () => {
         navigate({ to: '/booking' })
     }
 
-    if (!clientSecret) {
+    if (stripeConfigError) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+                <div className="max-w-md w-full bg-white border border-red-200 rounded-lg shadow-sm p-6 text-center space-y-4">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-2xl">
+                        !
+                    </div>
+                    <h2 className="text-xl font-semibold text-red-600">
+                        Payment Configuration Error
+                    </h2>
+                    <p className="text-sm text-gray-600 leading-relaxed">{stripeConfigError}</p>
+                    <button
+                        onClick={() => navigate({ to: '/' })}
+                        className="mt-4 inline-flex items-center justify-center px-5 py-2 rounded-md bg-slate-900 text-white font-medium hover:bg-slate-800 transition-colors"
+                    >
+                        Return Home
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    if (!clientSecret || !stripePromise) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-3 text-slate-700">
                 <Loader2 className="w-8 h-8 text-slate-800 animate-spin" />
+                <p className="text-sm">Preparing secure payment...</p>
             </div>
         )
     }
@@ -63,7 +108,9 @@ const PaymentPage: React.FC = () => {
                                 <ArrowLeft className="w-5 h-5" />
                                 Back to Booking
                             </button>
-                            <h1 className="text-xl font-bold text-slate-800">Complete Your Payment</h1>
+                            <h1 className="text-xl font-bold text-slate-800">
+                                Complete Your Payment
+                            </h1>
                             <div className="w-32" /> {/* Spacer */}
                         </div>
                     </div>
