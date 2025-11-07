@@ -1,3 +1,4 @@
+import { aboutRoute } from './features/about/routes/AboutRoute'
 import { emailVerificationRoute } from './features/auth/routes/EmailVerification'
 import { forgotPasswordRoute } from './features/auth/routes/ForgotPassword'
 import { loginRoute } from './features/auth/routes/Login'
@@ -9,11 +10,11 @@ import { actorDetailRoute } from './features/movies/routes/ActorDetailRoute'
 import { bookingRoute } from './features/movies/routes/BookingRoute'
 import { movieDetailRoute } from './features/movies/routes/MovieDetailRoute'
 import { moviesRoute } from './features/movies/routes/MoviesRoute'
-import { aboutRoute } from './features/about/routes/AboutRoute'
-import { upcomingMoviesRoute } from './features/movies/routes/UpcomingMoviesRoute'
 import { nowShowingMoviesRoute } from './features/movies/routes/NowShowingMoviesRoute'
-import { promotionsRoute } from './features/promotions/routes/PromotionsRoute'
+import { upcomingMoviesRoute } from './features/movies/routes/UpcomingMoviesRoute'
+import { paymentRoute, paymentSuccessRoute } from './features/payment/routes'
 import { changePasswordRoute, editProfileRoute, profileRoute } from './features/profile/routes'
+import { promotionsRoute } from './features/promotions/routes/PromotionsRoute'
 import { rootRoute } from './shared/routes/__root'
 
 // Create the route tree
@@ -30,6 +31,8 @@ export const routeTree = rootRoute.addChildren([
     actorDetailRoute,
     profileRoute.addChildren([editProfileRoute, changePasswordRoute]),
     bookingRoute,
+    paymentRoute,
+    paymentSuccessRoute,
     upcomingMoviesRoute,
     nowShowingMoviesRoute,
     promotionsRoute,

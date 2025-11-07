@@ -1,19 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { Voucher, VoucherApiResponse } from '../types/voucher.types'
+import { apiClient } from '@/shared/api/api-client'
 
-const API_BASE_URL = 'https://api.cinestech.me/api/v1'
+// const API_BASE_URL = 'https://api.cinestech.me/api/v1'
 
 // Hook để lấy danh sách voucher public
 export const usePublicVouchers = () => {
     return useQuery<VoucherApiResponse>({
         queryKey: ['publicVouchers'],
         queryFn: async () => {
-            const response = await fetch(`${API_BASE_URL}/voucher/public`)
-            if (!response.ok) {
+            const response = await apiClient.get('/voucher/public')
+            if (!response.data) {
                 throw new Error('Failed to fetch vouchers')
             }
-            return response.json()
+            return response.data
         },
         staleTime: 5 * 60 * 1000 // 5 minutes
     })
@@ -36,7 +37,7 @@ export const useVoucherSearch = () => {
         setSearchError(null)
 
         try {
-            const response = await fetch(`${API_BASE_URL}/voucher/check`, {
+            const response = await apiClient.post('/voucher/check', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -44,14 +45,11 @@ export const useVoucherSearch = () => {
                 body: JSON.stringify({ code: code.trim().toUpperCase() })
             })
 
-            if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error('Voucher not found')
-                }
+            if (!response) {
                 throw new Error('Failed to check voucher')
             }
 
-            const data = await response.json()
+            const data = await response.data
 
             if (data.success && data.data) {
                 setSearchResult(data.data)
