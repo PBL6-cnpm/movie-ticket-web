@@ -4,8 +4,8 @@ import { useAuth } from '@/features/auth/hooks/auth.hook'
 import { apiClient } from '@/shared/api/api-client'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Calendar, ChevronDown, Info, LogOut, MapPin, Popcorn, Ticket, User } from 'lucide-react'
-import React, { useRef, useState } from 'react'
+import { Calendar, ChevronDown, Clapperboard, Info, LogOut, MapPin, Popcorn, Ticket, User } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
 import GlobalSearch from './GlobalSearch'
 
 const subNavLinks = [
@@ -33,6 +33,7 @@ const NewHeader: React.FC = () => {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
     const [isBranchMenuOpen, setIsBranchMenuOpen] = useState(false)
     const branchMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const userMenuRef = useRef<HTMLDivElement>(null)
 
     const { data: branches, isLoading: branchesLoading } = useQuery({
         queryKey: ['branches'],
@@ -40,6 +41,18 @@ const NewHeader: React.FC = () => {
         enabled: isBranchMenuOpen, // Only fetch when the menu is hovered
         staleTime: 1000 * 60 * 5 // 5 minutes
     })
+
+    // Close user menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     const handleLogout = async () => {
         await logout()
@@ -58,6 +71,17 @@ const NewHeader: React.FC = () => {
             setIsBranchMenuOpen(false)
         }, 200)
     }
+
+    const toggleUserMenu = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsUserMenuOpen(!isUserMenuOpen)
+    }
+
+    // Reset dropdown when user logs in
+    useEffect(() => {
+        setIsUserMenuOpen(false)
+    }, [isAuthenticated])
 
     return (
         <header className="bg-[#1a2232] shadow-lg sticky top-0 z-50 border-b border-white/10">
@@ -87,20 +111,18 @@ const NewHeader: React.FC = () => {
                         {/* Auth Section */}
                         <div className="border-l border-gray-700 pl-4">
                             {isAuthenticated && account ? (
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                        className="flex items-center gap-2"
-                                    >
+                                <div className="relative" ref={userMenuRef}>
+                                    <div className="flex items-center gap-2">
                                         <img
                                             src={account.avatarUrl || '/default-avatar.png'}
                                             alt="User"
+                                            onClick={toggleUserMenu}
                                             className="w-9 h-9 rounded-full object-cover cursor-pointer"
                                         />
                                         <ChevronDown
                                             className={`w-4 h-4 text-gray-400 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`}
                                         />
-                                    </button>
+                                    </div>
                                     {isUserMenuOpen && (
                                         <div className="absolute right-0 mt-2 w-48 bg-[#242b3d] rounded-lg shadow-xl border border-white/10 py-2 animate-in fade-in zoom-in-95">
                                             <div className="px-3 py-2 border-b border-gray-700">
@@ -114,8 +136,16 @@ const NewHeader: React.FC = () => {
                                             <Link
                                                 to="/profile"
                                                 className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-[#1a2232] hover:text-white"
+                                                onClick={() => setIsUserMenuOpen(false)}
                                             >
-                                                <User className="w-4 h-4" /> My Profile
+                                                <User className="w-4 h-4" /> Profile
+                                            </Link>
+                                            <Link
+                                                to="/profile/bookings"
+                                                className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-[#1a2232] hover:text-white"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            >
+                                                <Clapperboard className="w-4 h-4" /> Bookings
                                             </Link>
                                             <button
                                                 onClick={handleLogout}
