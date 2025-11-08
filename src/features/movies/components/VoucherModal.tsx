@@ -1,6 +1,5 @@
-import { useDebounce } from '@/shared/hooks/useDebounce'
 import { DollarSign, Percent, Search, ShoppingCart, Tag, X } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useVoucherSearch } from '../hooks/useVouchers'
 import type { AppliedVoucher, Voucher } from '../types/voucher.types'
 
@@ -26,18 +25,8 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
     onRemoveVoucher
 }) => {
     const [searchCode, setSearchCode] = useState('')
-    const debouncedSearchCode = useDebounce(searchCode, 3000) // 3 seconds debounce
     const { searchVoucher, clearSearch, isSearching, searchResult, searchError } =
         useVoucherSearch()
-
-    // Effect to search when debounced code changes
-    useEffect(() => {
-        if (debouncedSearchCode && debouncedSearchCode.length >= 3) {
-            searchVoucher(debouncedSearchCode)
-        } else {
-            clearSearch()
-        }
-    }, [debouncedSearchCode, searchVoucher, clearSearch])
 
     // Clear search when modal closes
     useEffect(() => {
@@ -47,6 +36,30 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
         }
     }, [isOpen, clearSearch])
 
+    useEffect(() => {
+        if (searchCode.trim().length === 0) {
+            clearSearch()
+        }
+    }, [searchCode, clearSearch])
+
+    const handleSearchSubmit = useCallback(() => {
+        const normalizedCode = searchCode.trim().toUpperCase()
+
+        if (normalizedCode.length < 3) {
+            clearSearch()
+            return
+        }
+
+        searchVoucher(normalizedCode)
+    }, [searchCode, searchVoucher, clearSearch])
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.preventDefault()
+            handleSearchSubmit()
+        }
+    }
+
     if (!isOpen) return null
 
     const calculateDiscount = (voucher: Voucher, amount: number): number => {
@@ -55,22 +68,19 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
             return 0
         }
 
-        let discount = 0
-
-        if (voucher.discountValue) {
-            // Fixed discount
-            discount = voucher.discountValue
-        } else if (voucher.discountPercent) {
-            // Percentage discount
-            discount = (amount * voucher.discountPercent) / 100
-
-            // Apply max discount limit if exists
-            if (voucher.maxDiscountValue && discount > voucher.maxDiscountValue) {
-                discount = voucher.maxDiscountValue
-            }
+        if (voucher.maxDiscountValue) {
+            return voucher.maxDiscountValue
         }
 
-        return discount
+        if (voucher.discountValue) {
+            return voucher.discountValue
+        }
+
+        if (voucher.discountPercent) {
+            return (amount * voucher.discountPercent) / 100
+        }
+
+        return 0
     }
 
     const isVoucherApplicable = (voucher: Voucher): boolean => {
@@ -175,6 +185,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                     type="text"
                                     value={searchCode}
                                     onChange={(e) => setSearchCode(e.target.value.toUpperCase())}
+                                    onKeyDown={handleKeyDown}
                                     placeholder="Enter voucher code (e.g. SECRETGIFT)"
                                     className="w-full bg-[#242b3d]/50 border border-white/30 rounded-xl px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#648ddb] focus:border-transparent transition-all backdrop-blur-sm"
                                     maxLength={20}
@@ -183,7 +194,14 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                     {isSearching ? (
                                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#648ddb]"></div>
                                     ) : (
-                                        <Search className="w-5 h-5 text-gray-400" />
+                                        <button
+                                            type="button"
+                                            onClick={handleSearchSubmit}
+                                            className="text-[#648ddb] hover:text-white transition-colors"
+                                            aria-label="Search voucher code"
+                                        >
+                                            <Search className="w-5 h-5" />
+                                        </button>
                                     )}
                                 </div>
                             </div>
@@ -297,7 +315,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                             {/* Search Hint */}
                             {searchCode && !isSearching && !searchResult && !searchError && (
                                 <div className="mt-3 text-xs text-gray-400">
-                                    Type at least 3 characters and wait 3 seconds to search...
+                                    Type at least 3 characters and press Enter to search.
                                 </div>
                             )}
                         </div>

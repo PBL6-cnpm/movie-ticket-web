@@ -5,6 +5,7 @@ import type { HoldBookingPayload } from '@/features/movies/hooks/useHoldBooking'
 import { useHoldBooking } from '@/features/movies/hooks/useHoldBooking'
 import { useMovieDetail } from '@/features/movies/hooks/useMovieDetail'
 import { useRefreshments } from '@/features/movies/hooks/useRefreshments'
+import { useSeatLayout } from '@/features/movies/hooks/useSeatLayout'
 import { useSelectedSeatsInfo } from '@/features/movies/hooks/useSelectedSeatsInfo'
 import { usePublicVouchers } from '@/features/movies/hooks/useVouchers'
 import { useBookingStore } from '@/features/movies/stores/booking.store'
@@ -12,16 +13,28 @@ import type { SelectedRefreshment } from '@/features/movies/types/refreshment.ty
 import type { AppliedVoucher, Voucher } from '@/features/movies/types/voucher.types'
 import { useCreatePaymentIntent } from '@/features/payment/hooks/usePayment'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Calendar, Clock, Loader2, Minus, Plus, Tag, Users } from 'lucide-react'
+import {
+    ArrowLeft,
+    Calendar,
+    Clock,
+    DoorClosed,
+    Loader2,
+    MapPin,
+    Minus,
+    Plus,
+    Tag,
+    Timer,
+    Users
+} from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
-import { useMovieShowTimes } from '../../home/hooks/useBookingApi'
+import { useBranches, useMovieShowTimes } from '../../home/hooks/useBookingApi'
 
 const BookingPage: React.FC = () => {
     console.log('=== BookingPage mounted ===')
     const navigate = useNavigate()
-    const { movieId, showtimeId } = useBookingStore()
+    const { movieId, showtimeId, branchId, date } = useBookingStore()
 
     const [selectedSeats, setSelectedSeats] = useState<string[]>([])
     const [selectedRefreshments, setSelectedRefreshments] = useState<SelectedRefreshment[]>([])
@@ -36,6 +49,8 @@ const BookingPage: React.FC = () => {
 
     const { data: movie, isLoading: movieLoading } = useMovieDetail(movieId || '')
     const { data: showTimes = [] } = useMovieShowTimes(movieId || '')
+    const { data: seatLayoutData } = useSeatLayout(showtimeId || '')
+    const { data: branches = [] } = useBranches()
     const { data: refreshmentsData, isLoading: refreshmentsLoading } = useRefreshments()
     const { totalCost: seatsTotalCost, selectedSeatsInfo } = useSelectedSeatsInfo(
         showtimeId || '',
@@ -73,16 +88,20 @@ const BookingPage: React.FC = () => {
 
     const calculateVoucherDiscount = (voucher: Voucher, amount: number): number => {
         if (voucher.minimumOrderValue && amount < voucher.minimumOrderValue) return 0
-        let discount = 0
-        if (voucher.discountValue) {
-            discount = voucher.discountValue
-        } else if (voucher.discountPercent) {
-            discount = (amount * voucher.discountPercent) / 100
-            if (voucher.maxDiscountValue && discount > voucher.maxDiscountValue) {
-                discount = voucher.maxDiscountValue
-            }
+
+        if (voucher.maxDiscountValue) {
+            return voucher.maxDiscountValue
         }
-        return discount
+
+        if (voucher.discountValue) {
+            return voucher.discountValue
+        }
+
+        if (voucher.discountPercent) {
+            return (amount * voucher.discountPercent) / 100
+        }
+
+        return 0
     }
 
     const handleApplyVoucher = (voucher: Voucher) => {
@@ -98,6 +117,23 @@ const BookingPage: React.FC = () => {
     const currentShowtime = showTimes
         .flatMap((day) => day.times)
         .find((time) => time.id === showtimeId)
+
+    const currentShowtimeGroup = showTimes.find((day) =>
+        day.times.some((time) => time.id === showtimeId)
+    )
+
+    const sessionDateSource = currentShowtimeGroup?.dayOfWeek.value || date
+    const sessionDate = sessionDateSource ? new Date(sessionDateSource) : null
+    const formattedSessionDate = sessionDate
+        ? sessionDate.toLocaleDateString('vi-VN', {
+              weekday: 'long',
+              day: '2-digit',
+              month: '2-digit'
+          })
+        : null
+
+    const selectedBranch = branchId ? branches.find((branch) => branch.id === branchId) : null
+    const roomName = seatLayoutData?.roomName ?? null
 
     const handleSeatSelect = (seatName: string) => {
         setSelectedSeats((prev) =>
@@ -290,30 +326,69 @@ const BookingPage: React.FC = () => {
                             {/* Movie Info Sidebar */}
                             <aside className="lg:col-span-1.5">
                                 <div className="bg-[#242b3d] rounded-2xl p-6 sticky top-24">
-                                    <div className="flex items-start gap-4 mb-6">
-                                        <img
-                                            src={movie.poster}
-                                            alt={movie.name}
-                                            className="w-20 h-28 object-cover rounded-lg"
-                                        />
-                                        <div className="flex-1">
-                                            <h2 className="text-lg font-bold text-white mb-2">
+                                    <div className="mb-6 space-y-6">
+                                        <div className="flex flex-col items-center text-center gap-4">
+                                            <div className="relative w-44 h-64 sm:w-48 sm:h-72 lg:w-56 lg:h-80">
+                                                <img
+                                                    src={movie.poster}
+                                                    alt={movie.name}
+                                                    className="w-full h-full object-cover rounded-2xl shadow-xl"
+                                                />
+                                                <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full border border-white/10 bg-[#0f172a]/80 px-3 py-1 text-xs font-semibold text-white shadow-lg z-10">
+                                                    <Users className="w-3.5 h-3.5" />
+                                                    <span>T{movie.ageLimit}+</span>
+                                                </div>
+                                            </div>
+                                            <h2 className="text-xl font-bold text-white leading-snug">
                                                 {movie.name}
                                             </h2>
-                                            <div className="space-y-2 text-sm">
-                                                <div className="flex items-center gap-2 text-[#cccccc]">
-                                                    <Clock className="w-4 h-4" />
-                                                    {formatDuration(movie.duration)}
-                                                </div>
-                                                <div className="flex items-center gap-2 text-[#cccccc]">
-                                                    <Users className="w-4 h-4" />T{movie.ageLimit}+
-                                                </div>
-                                                {currentShowtime && (
-                                                    <div className="flex items-center gap-2 text-[#fe7e32]">
-                                                        <Calendar className="w-4 h-4" />
+                                        </div>
+                                        <div className="border-t border-white/10 pt-6">
+                                            <h3 className="text-sm font-semibold text-[#fe7e32] mb-4">
+                                                Session Details
+                                            </h3>
+                                            <div className="space-y-4 text-sm text-[#cccccc]">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    {formattedSessionDate && (
+                                                        <div className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5">
+                                                            <Calendar className="w-3.5 h-3.5 text-[#fe7e32]" />
+                                                            <span className="capitalize">
+                                                                {formattedSessionDate}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <div className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5">
+                                                        <Timer className="w-3.5 h-3.5 text-[#fe7e32]" />
                                                         <span>
-                                                            Showtime: {currentShowtime.time}
+                                                            {formatDuration(movie.duration)}
                                                         </span>
+                                                    </div>
+                                                    {currentShowtime?.time && (
+                                                        <div className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5">
+                                                            <Clock className="w-3.5 h-3.5 text-[#fe7e32]" />
+                                                            <span>{currentShowtime.time}</span>
+                                                        </div>
+                                                    )}
+                                                    {roomName && (
+                                                        <div className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5">
+                                                            <DoorClosed className="w-3.5 h-3.5 text-[#fe7e32]" />
+                                                            <span> {roomName}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {selectedBranch && (
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin className="w-4 h-4 text-[#fe7e32] mt-0.5" />
+                                                        <div className="space-y-1">
+                                                            <p className="text-white font-medium leading-tight">
+                                                                {selectedBranch.name}
+                                                            </p>
+                                                            {selectedBranch.address && (
+                                                                <p className="text-xs text-[#9aa4b8] leading-tight line-clamp-2">
+                                                                    {selectedBranch.address}
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>

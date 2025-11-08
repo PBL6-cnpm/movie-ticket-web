@@ -1,7 +1,7 @@
+import { apiClient } from '@/shared/api/api-client'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { Voucher, VoucherApiResponse } from '../types/voucher.types'
-import { apiClient } from '@/shared/api/api-client'
 
 // const API_BASE_URL = 'https://api.cinestech.me/api/v1'
 
@@ -27,7 +27,9 @@ export const useVoucherSearch = () => {
     const [searchError, setSearchError] = useState<string | null>(null)
 
     const searchVoucher = async (code: string): Promise<void> => {
-        if (!code.trim()) {
+        const trimmedCode = code.trim().toUpperCase()
+
+        if (!trimmedCode) {
             setSearchResult(null)
             setSearchError(null)
             return
@@ -38,28 +40,20 @@ export const useVoucherSearch = () => {
 
         try {
             const response = await apiClient.post('/voucher/check', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ code: code.trim().toUpperCase() })
+                code: trimmedCode
             })
 
-            if (!response) {
-                throw new Error('Failed to check voucher')
-            }
+            const payload = response.data
 
-            const data = await response.data
-
-            if (data.success && data.data) {
-                setSearchResult(data.data)
+            if (payload?.success && payload.data) {
+                setSearchResult(payload.data)
             } else {
                 setSearchResult(null)
-                setSearchError('Voucher not found')
+                setSearchError('Voucher not found or expired')
             }
         } catch (error) {
             setSearchResult(null)
-            setSearchError(error instanceof Error ? error.message : 'Failed to check voucher')
+            setSearchError(error instanceof Error ? error.message : 'Voucher not found or expired')
         } finally {
             setIsSearching(false)
         }
