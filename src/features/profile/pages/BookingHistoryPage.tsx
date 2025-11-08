@@ -102,6 +102,17 @@ export default function BookingHistoryPage() {
         }).format(price)
     }
 
+    const groupSeatsByType = (seats: { typeSeat: { name: string }, name: string }[]) => {
+        return Object.entries(
+            seats.reduce((acc, seat) => {
+            const typeName = seat.typeSeat.name || 'Standard';
+            if (!acc[typeName]) acc[typeName] = [];
+            acc[typeName].push(seat.name);
+            return acc;
+            }, {} as Record<string, string[]>)
+        );
+    }
+
     return (
         <ProtectedRoute>
             <div className="p-6 max-w-6xl mx-auto">
@@ -162,11 +173,17 @@ export default function BookingHistoryPage() {
                                                 <MapPin className="w-4 h-4" />
                                                 <span>{booking.seats[0]?.room.name || 'N/A'}</span>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <Armchair className="w-4 h-4" />
-                                                <span>
-                                                    Seats: {booking.seats.map((s) => s.name).join(', ')} ({booking.seats[0]?.typeSeat.name || 'Standard'})
-                                                </span>
+                                            <div className="flex items-start gap-2">
+                                                <Armchair className="w-4 h-4 flex-shrink-0 mt-1" />
+
+                                                <div className="flex-1 flex flex-col gap-1">
+                                                    {groupSeatsByType(booking.seats).map(([typeName, seats]) => (
+                                                    <div key={typeName} className="flex gap-1 items-center">
+                                                        <span className="text-[#cccccc]">{typeName}:</span>
+                                                        <span className="text-white">{seats.join(', ')}</span>
+                                                    </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                             {booking.refreshmentss && booking.refreshmentss.length > 0 && (
                                                 <div className="flex items-start gap-2 pt-2 border-t border-border">

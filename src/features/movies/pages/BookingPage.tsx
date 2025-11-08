@@ -247,6 +247,16 @@ const BookingPage: React.FC = () => {
         if (mins === 0) return `${hours}h`
         return `${hours}h ${mins}m`
     }
+
+    const groupedSeats = selectedSeatsInfo.reduce((acc, seat) => {
+        const typeName = seat.type.name;
+        if (!acc[typeName]) {
+            acc[typeName] = { seats: [], price: seat.type.price };
+        }
+        acc[typeName].seats.push(seat.name);
+        return acc;
+    }, {} as Record<string, { seats: string[]; price: number }>);
+
     return (
         <>
             {notification && (
@@ -269,7 +279,7 @@ const BookingPage: React.FC = () => {
                                     <ArrowLeft className="w-5 h-5" />
                                     Back
                                 </button>
-                                <h1 className="text-xl font-bold">Book Ticket</h1>
+                                <h1 className="text-xl font-bold">Booking Tickets</h1>
                                 <div className="w-20" />
                             </div>
                         </div>
@@ -278,7 +288,7 @@ const BookingPage: React.FC = () => {
                     <main className="container mx-auto px-4 py-6">
                         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                             {/* Movie Info Sidebar */}
-                            <aside className="lg:col-span-1">
+                            <aside className="lg:col-span-1.5">
                                 <div className="bg-[#242b3d] rounded-2xl p-6 sticky top-24">
                                     <div className="flex items-start gap-4 mb-6">
                                         <img
@@ -319,26 +329,18 @@ const BookingPage: React.FC = () => {
                                                     <h3 className="text-sm font-semibold text-[#fe7e32] mb-3">
                                                         Selected Seats ({selectedSeats.length})
                                                     </h3>
+
                                                     <div className="space-y-2 mb-4">
-                                                        {selectedSeatsInfo.map((seat) => (
-                                                            <div
-                                                                key={seat.name}
-                                                                className="flex justify-between items-center text-sm"
-                                                            >
-                                                                <span className="text-white">
-                                                                    {seat.name}
-                                                                </span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-[#cccccc]">
-                                                                        {seat.type.name}
-                                                                    </span>
-                                                                    <span className="text-[#fe7e32] font-medium">
-                                                                        {seat.type.price.toLocaleString(
-                                                                            'vi-VN'
-                                                                        )}{' '}
-                                                                        đ
-                                                                    </span>
-                                                                </div>
+                                                        {Object.entries(groupedSeats).map(([typeName, info]) => (
+                                                            <div key={typeName} className="flex items-center text-sm">
+                                                            <span className="flex-[0.4] text-[#cccccc]">
+                                                                {typeName}
+                                                                <p>({info.price.toLocaleString('vi-VN')} đ)</p>
+                                                            </span>
+
+                                                            <span className="flex-[0.6] text-white">
+                                                                {info.seats.join(', ')}
+                                                            </span>
                                                             </div>
                                                         ))}
                                                     </div>
