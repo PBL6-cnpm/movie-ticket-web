@@ -127,7 +127,7 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
                 <p className="text-xs font-semibold text-gray-300 mb-8 tracking-widest">SCREEN</p>
 
                 {/* Seat Grid */}
-                <div className="flex flex-col gap-3 w-full overflow-x-auto px-4">
+                <div className="flex flex-col gap-3 w-full overflow-hidden px-4">
                     {rowKeys.map((row) => (
                         <div key={row} className="flex items-center justify-center gap-3 min-w-max">
                             <span className="w-6 text-center font-bold text-sm text-gray-400 mr-2">
