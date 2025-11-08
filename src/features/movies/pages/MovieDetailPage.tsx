@@ -235,19 +235,23 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
     }
 
     const handleShowtimeSelect = (showtimeId: string) => {
+        setSelectedShowtime(showtimeId)
         const token = localStorage.getItem('accessToken')
+        const bookingPayload = {
+            movieId,
+            showtimeId,
+            branchId: selectedCinema,
+            date: selectedDate
+        }
+
         if (!isAuthenticated && !token) {
             setBookingState({
-                movieId,
-                showtimeId,
+                ...bookingPayload,
                 redirectUrl: '/booking'
             })
             navigate({ to: '/login' })
         } else {
-            setBookingState({
-                movieId,
-                showtimeId
-            })
+            setBookingState(bookingPayload)
             navigate({ to: '/booking' })
         }
     }
@@ -341,7 +345,12 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                         {availableShowtimes.length > 0 ? (
                             <div className="flex flex-wrap gap-3">
                                 {availableShowtimes.map(
-                                    (showtime: { id: string; time: string }) => (
+                                    (showtime: {
+                                        id: string
+                                        time: string
+                                        availableSeats?: number
+                                        totalSeats?: number
+                                    }) => (
                                         <button
                                             key={showtime.id}
                                             onClick={() => handleShowtimeSelect(showtime.id)}
@@ -350,8 +359,18 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                                                     ? 'bg-[#fe7e32] border-[#fe7e32] text-white scale-105 shadow-lg shadow-[#fe7e32]/20'
                                                     : 'bg-transparent border-white/20 hover:border-[#fe7e32] text-white'
                                             }`}
+                                            aria-live="polite"
                                         >
-                                            {showtime.time}
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span>{showtime.time}</span>
+                                                {typeof showtime.availableSeats === 'number' &&
+                                                    typeof showtime.totalSeats === 'number' && (
+                                                        <span className="text-xs text-[#cccccc]">
+                                                            {showtime.availableSeats}/
+                                                            {showtime.totalSeats} seats
+                                                        </span>
+                                                    )}
+                                            </div>
                                         </button>
                                     )
                                 )}
