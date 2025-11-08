@@ -73,16 +73,20 @@ const BookingPage: React.FC = () => {
 
     const calculateVoucherDiscount = (voucher: Voucher, amount: number): number => {
         if (voucher.minimumOrderValue && amount < voucher.minimumOrderValue) return 0
-        let discount = 0
-        if (voucher.discountValue) {
-            discount = voucher.discountValue
-        } else if (voucher.discountPercent) {
-            discount = (amount * voucher.discountPercent) / 100
-            if (voucher.maxDiscountValue && discount > voucher.maxDiscountValue) {
-                discount = voucher.maxDiscountValue
-            }
+
+        if (voucher.maxDiscountValue) {
+            return voucher.maxDiscountValue
         }
-        return discount
+
+        if (voucher.discountValue) {
+            return voucher.discountValue
+        }
+
+        if (voucher.discountPercent) {
+            return (amount * voucher.discountPercent) / 100
+        }
+
+        return 0
     }
 
     const handleApplyVoucher = (voucher: Voucher) => {
