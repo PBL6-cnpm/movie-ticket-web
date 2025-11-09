@@ -8,6 +8,7 @@ import { verifyEmailFailureRoute } from './features/auth/routes/VerifyEmailFailu
 import { homeRoute } from './features/home/routes/HomeRoute'
 import { actorDetailRoute } from './features/movies/routes/ActorDetailRoute'
 import { bookingRoute } from './features/movies/routes/BookingRoute'
+import { branchShowtimesRoute } from './features/movies/routes/BranchShowtimesRoute'
 import { movieDetailRoute } from './features/movies/routes/MovieDetailRoute'
 import { moviesRoute } from './features/movies/routes/MoviesRoute'
 import { nowShowingMoviesRoute } from './features/movies/routes/NowShowingMoviesRoute'
@@ -17,6 +18,7 @@ import {
     bookingHistoryRoute,
     changePasswordRoute,
     editProfileRoute,
+    myReviewsRoute,
     profileRoute
 } from './features/profile/routes'
 import { promotionsRoute } from './features/promotions/routes/PromotionsRoute'
@@ -34,7 +36,7 @@ export const routeTree = rootRoute.addChildren([
     moviesRoute,
     movieDetailRoute,
     actorDetailRoute,
-    profileRoute.addChildren([editProfileRoute, changePasswordRoute]),
+    profileRoute.addChildren([editProfileRoute, changePasswordRoute, myReviewsRoute]),
     bookingHistoryRoute,
     bookingRoute,
     paymentRoute,
@@ -42,5 +44,6 @@ export const routeTree = rootRoute.addChildren([
     upcomingMoviesRoute,
     nowShowingMoviesRoute,
     promotionsRoute,
-    aboutRoute
+    aboutRoute,
+    branchShowtimesRoute
 ])

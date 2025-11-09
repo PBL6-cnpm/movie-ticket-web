@@ -32,28 +32,35 @@ const HomeSection = () => {
                 setError(null)
 
                 const [upcomingResponse, nowShowingResponse] = await Promise.all([
-                    apiClient.get<ApiListResponse<ApiMovie>>(
-                        '/movies/upcoming?limit=10&offset=0'
-                    ),
+                    apiClient.get<ApiListResponse<ApiMovie>>('/movies/upcoming?limit=10&offset=0'),
                     apiClient.get<ApiListResponse<ApiMovie>>(
                         '/movies/now-showing?limit=10&offset=0'
                     )
                 ])
 
-                const movieMapper = (movie: ApiMovie): UIMovie => ({
-                    id: movie.id,
-                    title: movie.name,
-                    poster: movie.poster,
-                    duration: movie.duration,
-                    releaseDate: movie.releaseDate,
-                    ageRating: `T${movie.ageLimit}`,
-                    rating: 8.5, // Placeholder rating
-                    genres: movie?.genres?.map((g) => g.name) ?? [],
-                    description: movie.description || '',
-                    actors: movie.actors?.map((actor) => actor.name) ?? [],
-                    director: movie.director || '',
-                    status: movie.status ?? 'unknown'
-                })
+                const movieMapper = (movie: ApiMovie): UIMovie => {
+                    const apiRating =
+                        typeof movie.averageRating === 'number' ? movie.averageRating : null
+                    const legacyRating =
+                        typeof (movie as unknown as { avgRating?: number }).avgRating === 'number'
+                            ? (movie as unknown as { avgRating?: number }).avgRating
+                            : null
+
+                    return {
+                        id: movie.id,
+                        title: movie.name,
+                        poster: movie.poster,
+                        duration: movie.duration,
+                        releaseDate: movie.releaseDate,
+                        ageRating: `T${movie.ageLimit}`,
+                        rating: apiRating ?? legacyRating,
+                        genres: movie?.genres?.map((g) => g.name) ?? [],
+                        description: movie.description || '',
+                        actors: movie.actors?.map((actor) => actor.name) ?? [],
+                        director: movie.director || '',
+                        status: movie.status ?? 'unknown'
+                    }
+                }
 
                 if (upcomingResponse.data.success && upcomingResponse.data.data?.items) {
                     setUpcomingMovies(upcomingResponse.data.data.items.map(movieMapper))
@@ -96,11 +103,7 @@ const HomeSection = () => {
     }, [])
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-[#1a2232]">
-                {/* Skeletons */}
-            </div>
-        )
+        return <div className="min-h-screen bg-[#1a2232]">{/* Skeletons */}</div>
     }
 
     if (error) {
@@ -155,10 +158,7 @@ const HomeSection = () => {
                                     </h2>
                                 </div>
                             </div>
-                            <MovieSlider
-                                movies={upcomingMovies}
-                                viewAllUrl="/movies/upcoming"
-                            />
+                            <MovieSlider movies={upcomingMovies} viewAllUrl="/movies/upcoming" />
                         </div>
                     )}
 

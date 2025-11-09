@@ -1,27 +1,36 @@
 import { apiClient } from '@/shared/api/api-client'
+import Breadcrumb from '@/shared/components/navigation/Breadcrumb'
+import PageTransition from '@/shared/components/ui/PageTransition'
 import type { Movie as UIMovie } from '@/shared/data/mockMovies'
 import type { ApiListResponse, Movie as ApiMovie } from '@/shared/types/movies.types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
 import MovieCard from '../../home/components/MovieCard'
-import PageTransition from '@/shared/components/ui/PageTransition'
-import Breadcrumb from '@/shared/components/navigation/Breadcrumb'
 
-const movieMapper = (movie: ApiMovie): UIMovie => ({
-    id: movie.id,
-    title: movie.name,
-    poster: movie.poster,
-    duration: movie.duration,
-    releaseDate: movie.releaseDate,
-    ageRating: `T${movie.ageLimit}`,
-    rating: 8.5, // Placeholder
-    genres: movie?.genres?.map((g) => g.name) ?? [],
-    description: movie.description || '',
-    actors: movie.actors?.map((actor) => actor.name) ?? [],
-    director: movie.director || '',
-    status: movie.status ?? 'unknown'
-})
+const movieMapper = (movie: ApiMovie): UIMovie => {
+    const rating =
+        typeof movie.averageRating === 'number'
+            ? movie.averageRating
+            : typeof (movie as unknown as { avgRating?: number }).avgRating === 'number'
+              ? (movie as unknown as { avgRating?: number }).avgRating
+              : null
+
+    return {
+        id: movie.id,
+        title: movie.name,
+        poster: movie.poster,
+        duration: movie.duration,
+        releaseDate: movie.releaseDate,
+        ageRating: `T${movie.ageLimit}`,
+        rating,
+        genres: movie?.genres?.map((g) => g.name) ?? [],
+        description: movie.description || '',
+        actors: movie.actors?.map((actor) => actor.name) ?? [],
+        director: movie.director || '',
+        status: movie.status ?? 'unknown'
+    }
+}
 
 const fetchNowShowingMovies = async ({ pageParam = 0 }) => {
     const response = await apiClient.get<ApiListResponse<ApiMovie>>(
@@ -39,19 +48,13 @@ const fetchNowShowingMovies = async ({ pageParam = 0 }) => {
 const NowShowingMoviesPage = () => {
     const { ref, inView } = useInView()
 
-    const {
-        data,
-        error,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-        status
-    } = useInfiniteQuery({
-        queryKey: ['nowShowingMoviesPage'], // Use a unique key for the page query
-        queryFn: fetchNowShowingMovies,
-        initialPageParam: 0,
-        getNextPageParam: (lastPage) => lastPage.nextOffset
-    })
+    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
+        useInfiniteQuery({
+            queryKey: ['nowShowingMoviesPage'], // Use a unique key for the page query
+            queryFn: fetchNowShowingMovies,
+            initialPageParam: 0,
+            getNextPageParam: (lastPage) => lastPage.nextOffset
+        })
 
     useEffect(() => {
         if (inView && hasNextPage) {
@@ -78,7 +81,10 @@ const NowShowingMoviesPage = () => {
                     {status === 'pending' ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-10">
                             {[...Array(12)].map((_, i) => (
-                                <div key={i} className="aspect-[2/3] bg-gray-800 rounded-xl animate-pulse"></div>
+                                <div
+                                    key={i}
+                                    className="aspect-[2/3] bg-gray-800 rounded-xl animate-pulse"
+                                ></div>
                             ))}
                         </div>
                     ) : status === 'error' ? (

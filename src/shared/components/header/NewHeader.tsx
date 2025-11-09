@@ -3,8 +3,19 @@
 import { useAuth } from '@/features/auth/hooks/auth.hook'
 import { apiClient } from '@/shared/api/api-client'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { Calendar, ChevronDown, Clapperboard, Info, LogOut, MapPin, Popcorn, Ticket, User } from 'lucide-react'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
+import {
+    Calendar,
+    ChevronDown,
+    Clapperboard,
+    Info,
+    LogOut,
+    MapPin,
+    Popcorn,
+    Star,
+    Ticket,
+    User
+} from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import GlobalSearch from './GlobalSearch'
 
@@ -20,7 +31,7 @@ interface Branch {
 }
 
 const fetchBranches = async (): Promise<Branch[]> => {
-    const response = await apiClient.get('/branches')
+    const response = await apiClient.get('/api/v1/branches')
     if (response.data.success) {
         return response.data.data
     }
@@ -32,15 +43,40 @@ const NewHeader: React.FC = () => {
     const navigate = useNavigate()
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
     const [isBranchMenuOpen, setIsBranchMenuOpen] = useState(false)
+    const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null)
+    const [selectedBranchName, setSelectedBranchName] = useState<string>('')
     const branchMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const userMenuRef = useRef<HTMLDivElement>(null)
+    const routerState = useRouterState()
+    const shouldFetchBranches = isBranchMenuOpen || Boolean(selectedBranchId)
 
     const { data: branches, isLoading: branchesLoading } = useQuery({
         queryKey: ['branches'],
         queryFn: fetchBranches,
-        enabled: isBranchMenuOpen, // Only fetch when the menu is hovered
+        enabled: shouldFetchBranches,
         staleTime: 1000 * 60 * 5 // 5 minutes
     })
+
+    useEffect(() => {
+        const match = routerState.location.pathname.match(/^\/branches\/([^/]+)\/showtimes/)
+
+        if (match) {
+            const branchIdFromPath = match[1]
+            setSelectedBranchId((prev) => (prev === branchIdFromPath ? prev : branchIdFromPath))
+        } else {
+            setSelectedBranchId(null)
+            setSelectedBranchName('')
+        }
+    }, [routerState.location.pathname])
+
+    useEffect(() => {
+        if (!branches || !selectedBranchId) return
+
+        const matchedBranch = branches.find((branch) => branch.id === selectedBranchId)
+        if (matchedBranch) {
+            setSelectedBranchName(matchedBranch.name)
+        }
+    }, [branches, selectedBranchId])
 
     // Close user menu when clicking outside
     useEffect(() => {
@@ -147,6 +183,13 @@ const NewHeader: React.FC = () => {
                                             >
                                                 <Clapperboard className="w-4 h-4" /> Bookings
                                             </Link>
+                                            <Link
+                                                to="/profile/reviews"
+                                                className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-[#1a2232] hover:text-white"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            >
+                                                <Star className="w-4 h-4" /> My Ratings
+                                            </Link>
                                             <button
                                                 onClick={handleLogout}
                                                 className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-[#1a2232] hover:text-red-500"
@@ -181,7 +224,11 @@ const NewHeader: React.FC = () => {
                             >
                                 <button className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
                                     <MapPin className="w-4 h-4 text-[#648ddb]" />
-                                    <span>Select Cinema</span>
+                                    <span>
+                                        {selectedBranchName
+                                            ? ` ${selectedBranchName}`
+                                            : 'Select Cinema'}
+                                    </span>
                                     <ChevronDown
                                         className={`w-4 h-4 transition-transform ${isBranchMenuOpen ? 'rotate-180' : ''}`}
                                     />
@@ -196,8 +243,14 @@ const NewHeader: React.FC = () => {
                                             branches?.map((branch) => (
                                                 <Link
                                                     key={branch.id}
-                                                    to="/"
+                                                    to="/branches/$branchId/showtimes"
+                                                    params={{ branchId: branch.id }}
                                                     className="block px-4 py-2 text-sm text-gray-300 hover:bg-[#1a2232] hover:text-white truncate"
+                                                    onClick={() => {
+                                                        setSelectedBranchId(branch.id)
+                                                        setSelectedBranchName(branch.name)
+                                                        setIsBranchMenuOpen(false)
+                                                    }}
                                                 >
                                                     {branch.name} -{' '}
                                                     <span className="text-xs text-gray-500">

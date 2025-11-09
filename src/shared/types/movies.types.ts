@@ -28,6 +28,8 @@ export interface Movie {
     trailer: string
     poster: string
     releaseDate: string
+    avgRating?: number | null
+    averageRating?: number | null
     genres: Genre[]
     actors: Actor[]
     createdAt: string

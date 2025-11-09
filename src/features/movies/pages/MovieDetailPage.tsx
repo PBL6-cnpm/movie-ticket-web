@@ -5,15 +5,18 @@ import {
     ChevronDown,
     Clock,
     Film,
+    Loader2,
     MapPin,
+    MessageCircle,
     Play,
+    Send,
     Star,
     Ticket,
     User,
     Users,
     X
 } from 'lucide-react'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useBookingStore } from '../stores/booking.store'
 
 // UTILITIES & HOOKS
@@ -23,9 +26,12 @@ import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
 import {
     useBranches,
     useBranchMovieShowTimes,
+    useMovieShowTimes,
+    type Branch,
     type ShowTimeDay
 } from '../../home/hooks/useBookingApi'
 import { useMovieDetail, useSimilarMovies } from '../hooks/useMovieDetail'
+import { useCreateReview, useDeleteReview, useMovieReviews } from '../hooks/useMovieReviews'
 // ----- HELPER FUNCTIONS -----
 const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60)
@@ -47,6 +53,13 @@ const getAgeColor = (ageLimit: number) => {
     return 'bg-green-500'
 }
 
+const formatReviewDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    })
+
 // ----- SUB-COMPONENTS -----
 
 // Component cho phần Hero của phim
@@ -62,6 +75,8 @@ interface Movie {
     director: string
     trailer?: string
     genres: Array<{ id: string; name: string }>
+    avgRating?: number | null
+    averageRating?: number | null
 }
 
 const MovieHero = ({ movie, onWatchTrailer }: { movie: Movie; onWatchTrailer: () => void }) => (
@@ -105,7 +120,15 @@ const MovieHero = ({ movie, onWatchTrailer }: { movie: Movie; onWatchTrailer: ()
                         </div>
                         <div className="flex items-center gap-2">
                             <Star className="w-4 h-4 text-yellow-400" />
-                            <span className="font-semibold">8.5 / 10</span>
+                            <span className="font-semibold">
+                                {(() => {
+                                    const rating = movie.avgRating ?? movie.averageRating
+                                    if (typeof rating === 'number') {
+                                        return `${rating.toFixed(1)} / 10`
+                                    }
+                                    return 'Not rated yet'
+                                })()}
+                            </span>
                         </div>
                     </div>
 
@@ -185,7 +208,17 @@ const CastSection = ({
 )
 
 // Component cho phần đặt vé
-const BookingSection = ({ movieId }: { movieId: string }) => {
+const BookingSection = ({
+    movieId,
+    isUpcoming,
+    showTimesError,
+    showTimesErrorMessage
+}: {
+    movieId: string
+    isUpcoming: boolean
+    showTimesError: boolean
+    showTimesErrorMessage?: string
+}) => {
     const navigate = useNavigate()
     const [selectedCinema, setSelectedCinema] = useState('')
     const [selectedDate, setSelectedDate] = useState('')
@@ -197,12 +230,21 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
         selectedCinema
     )
 
+    const sanitizedShowTimeDays = useMemo(() => {
+        return showTimeDays
+            .map((day: ShowTimeDay) => ({
+                ...day,
+                times: (day.times || []).filter((time) => Boolean(time?.id && time?.time))
+            }))
+            .filter((day) => day.times.length > 0)
+    }, [showTimeDays])
+
     const { isAuthenticated } = useAuthStore()
     const { setBookingState } = useBookingStore()
 
     // Available dates from showtimes
     const availableDates = useMemo(() => {
-        return showTimeDays.map((day: ShowTimeDay) => ({
+        return sanitizedShowTimeDays.map((day: ShowTimeDay) => ({
             value: day.dayOfWeek.value.split('T')[0],
             label: `${day.dayOfWeek.name}, ${new Date(day.dayOfWeek.value).toLocaleDateString(
                 'vi-VN',
@@ -212,16 +254,41 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                 }
             )}`
         }))
-    }, [showTimeDays])
+    }, [sanitizedShowTimeDays])
 
     // Available showtimes for selected date
     const availableShowtimes = useMemo(() => {
         if (!selectedDate) return []
-        const selectedDay = showTimeDays.find(
+        const selectedDay = sanitizedShowTimeDays.find(
             (day: ShowTimeDay) => day.dayOfWeek.value.split('T')[0] === selectedDate
         )
         return selectedDay?.times || []
-    }, [showTimeDays, selectedDate])
+    }, [sanitizedShowTimeDays, selectedDate])
+
+    useEffect(() => {
+        if (!selectedDate) return
+
+        const exists = sanitizedShowTimeDays.some(
+            (day: ShowTimeDay) => day.dayOfWeek.value.split('T')[0] === selectedDate
+        )
+
+        if (!exists) {
+            setSelectedDate('')
+            setSelectedShowtime('')
+        }
+    }, [selectedDate, sanitizedShowTimeDays])
+
+    useEffect(() => {
+        if (!selectedShowtime) return
+
+        const exists = sanitizedShowTimeDays.some((day: ShowTimeDay) =>
+            day.times.some((time) => time.id === selectedShowtime)
+        )
+
+        if (!exists) {
+            setSelectedShowtime('')
+        }
+    }, [selectedShowtime, sanitizedShowTimeDays])
 
     const handleCinemaChange = (value: string) => {
         setSelectedCinema(value)
@@ -256,7 +323,45 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
         }
     }
 
-    const selectedCinemaName = branches.find((b) => b.id === selectedCinema)?.name || 'Cinema'
+    useEffect(() => {
+        if (!selectedCinema) return
+
+        const exists = branches.some((branch: Branch) => branch.id === selectedCinema)
+
+        if (!exists) {
+            setSelectedCinema('')
+            setSelectedDate('')
+            setSelectedShowtime('')
+        }
+    }, [branches, selectedCinema])
+
+    const selectedCinemaName =
+        branches.find((branch: Branch) => branch.id === selectedCinema)?.name || 'Cinema'
+
+    if (showTimesError) {
+        return (
+            <div className="bg-[#242b3d] rounded-2xl p-8 flex flex-col items-center justify-center min-h-[200px] text-center">
+                <Ticket className="w-10 h-10 text-[#fe7e32] mb-3" />
+                <h3 className="text-lg font-semibold text-white mb-2">Unable to load showtimes</h3>
+                <p className="text-sm text-[#cccccc] max-w-md">
+                    {showTimesErrorMessage ||
+                        'We could not retrieve showtimes for this movie right now. Please try again later.'}
+                </p>
+            </div>
+        )
+    }
+
+    if (isUpcoming) {
+        return (
+            <div className="bg-[#242b3d] rounded-2xl p-8 flex flex-col items-center justify-center min-h-[200px] text-center">
+                <Ticket className="w-10 h-10 text-[#fe7e32] mb-3" />
+                <h3 className="text-lg font-semibold text-white mb-2">Upcoming Release</h3>
+                <p className="text-sm text-[#cccccc] max-w-md">
+                    This movie does not have scheduled showtimes yet. Please check back soon once screenings are announced.
+                </p>
+            </div>
+        )
+    }
 
     if (branchesLoading) {
         return (
@@ -265,6 +370,19 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#fe7e32]"></div>
                     Loading booking options...
                 </div>
+            </div>
+        )
+    }
+
+    if (!branches.length) {
+        return (
+            <div className="bg-[#242b3d] rounded-2xl p-8 flex flex-col items-center justify-center min-h-[200px] text-center">
+                <Ticket className="w-10 h-10 text-[#fe7e32] mb-3" />
+                <h3 className="text-lg font-semibold text-white mb-2">No Showtimes Available</h3>
+                <p className="text-sm text-[#cccccc] max-w-md">
+                    This movie currently has no scheduled screenings at any cinema. Please check
+                    back later or explore other movies showing now.
+                </p>
             </div>
         )
     }
@@ -296,7 +414,7 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
                                 className="w-full bg-[#1a2232] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#fe7e32] appearance-none cursor-pointer"
                             >
                                 <option value="">Select Cinema</option>
-                                {branches.map((branch) => (
+                                {branches.map((branch: Branch) => (
                                     <option key={branch.id} value={branch.id}>
                                         {branch.name}
                                     </option>
@@ -387,6 +505,464 @@ const BookingSection = ({ movieId }: { movieId: string }) => {
     )
 }
 
+const ReviewsSection = ({
+    movieId,
+    averageRating,
+    canSubmit = true
+}: {
+    movieId: string
+    averageRating?: number | null
+    canSubmit?: boolean
+}) => {
+    const navigate = useNavigate()
+    const { isAuthenticated, account } = useAuthStore()
+    const [rating, setRating] = useState<number>(0)
+    const [hoverRating, setHoverRating] = useState<number>(0)
+    const [comment, setComment] = useState('')
+    const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
+        null
+    )
+    const [manageFeedback, setManageFeedback] = useState<{
+        type: 'success' | 'error'
+        message: string
+    } | null>(null)
+
+    const ratingDisabled = !canSubmit
+
+    const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, isError, error } =
+        useMovieReviews(movieId, { enabled: !ratingDisabled })
+    const createReview = useCreateReview(movieId)
+    const deleteReview = useDeleteReview(movieId)
+
+    const reviews = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data])
+    const userReview = useMemo(() => {
+        if (!account?.id) return undefined
+        return reviews.find((reviewItem) => reviewItem.account.id === account.id)
+    }, [account?.id, reviews])
+    const displayReviews = useMemo(() => {
+        if (!account?.id) return reviews
+        const owned = reviews.filter((reviewItem) => reviewItem.account.id === account.id)
+        if (!owned.length) return reviews
+        const others = reviews.filter((reviewItem) => reviewItem.account.id !== account.id)
+        return [...owned, ...others]
+    }, [account?.id, reviews])
+    const totalReviews = data?.pages?.[0]?.meta?.total ?? 0
+    const audienceScore = typeof averageRating === 'number' ? averageRating : null
+    const currentRating = hoverRating || rating
+    const isSubmitting = createReview.isPending
+    const hasUserReview = Boolean(isAuthenticated && userReview)
+
+    const resolveErrorMessage = (err: unknown, fallback: string) => {
+        if (
+            err &&
+            typeof err === 'object' &&
+            'message' in err &&
+            typeof (err as { message?: string }).message === 'string'
+        ) {
+            return (err as { message: string }).message || fallback
+        }
+        return fallback
+    }
+
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+
+        if (!isAuthenticated) {
+            navigate({ to: '/login' })
+            return
+        }
+
+        if (!rating) {
+            setFeedback({ type: 'error', message: 'Please select a rating before submitting.' })
+            return
+        }
+
+        if (comment.trim().length < 3) {
+            setFeedback({
+                type: 'error',
+                message: 'Please share a few words about the movie (min 3 characters).'
+            })
+            return
+        }
+
+        setFeedback(null)
+
+        createReview.mutate(
+            { rating, comment: comment.trim() },
+            {
+                onSuccess: () => {
+                    setFeedback({ type: 'success', message: 'Thanks for sharing your review!' })
+                    setRating(0)
+                    setHoverRating(0)
+                    setComment('')
+                },
+                onError: (error) => {
+                    const message = resolveErrorMessage(
+                        error,
+                        'Unable to submit review. Please try again.'
+                    )
+                    setFeedback({ type: 'error', message })
+                }
+            }
+        )
+    }
+
+    const handleSignIn = () => {
+        navigate({ to: '/login' })
+    }
+
+    const handleCommentChange = (value: string) => {
+        if (feedback) {
+            setFeedback(null)
+        }
+        setComment(value)
+    }
+
+    const handleDeleteReview = () => {
+        if (!userReview) return
+        setManageFeedback(null)
+        deleteReview.mutate(userReview.id, {
+            onSuccess: () => {
+                setManageFeedback({ type: 'success', message: 'Your review has been removed.' })
+                setRating(0)
+                setHoverRating(0)
+                setComment('')
+            },
+            onError: (mutationError) => {
+                const message = resolveErrorMessage(
+                    mutationError,
+                    'Could not remove your review. Please try again.'
+                )
+                setManageFeedback({ type: 'error', message })
+            }
+        })
+    }
+
+    const renderInteractiveStars = () => (
+        <div className="flex items-center gap-1.5 flex-wrap">
+            {Array.from({ length: 10 }, (_, index) => {
+                const starValue = index + 1
+                const active = currentRating >= starValue
+
+                return (
+                    <button
+                        key={starValue}
+                        type="button"
+                        onMouseEnter={() => setHoverRating(starValue)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        onClick={() => {
+                            setRating(starValue)
+                            if (feedback) {
+                                setFeedback(null)
+                            }
+                        }}
+                        className="transition-transform hover:scale-110 focus:outline-none"
+                    >
+                        <Star
+                            className="w-6 h-6"
+                            strokeWidth={active ? 0 : 1.5}
+                            fill={active ? '#facc15' : 'none'}
+                            color={active ? '#facc15' : '#94a3b8'}
+                        />
+                    </button>
+                )
+            })}
+            <span className="ml-2 text-sm text-[#9aa4b8]">
+                {rating ? `${rating} / 10` : 'Select rating'}
+            </span>
+        </div>
+    )
+
+    const renderStaticStars = (value: number) => (
+        <div className="flex items-center gap-1 flex-wrap">
+            {Array.from({ length: 10 }, (_, index) => {
+                const starValue = index + 1
+                const active = value >= starValue
+
+                return (
+                    <Star
+                        key={starValue}
+                        className="w-4 h-4"
+                        strokeWidth={active ? 0 : 1.5}
+                        fill={active ? '#facc15' : 'none'}
+                        color={active ? '#facc15' : '#94a3b8'}
+                    />
+                )
+            })}
+        </div>
+    )
+
+    if (ratingDisabled) {
+        return (
+            <div className="bg-[#242b3d] rounded-2xl p-6 md:p-8 shadow-xl border border-white/5">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#fe7e32]/15 border border-[#fe7e32]/30 flex items-center justify-center">
+                        <MessageCircle className="w-6 h-6 text-[#fe7e32]" />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-bold text-white">Audience Reviews</h3>
+                        <p className="text-sm text-[#9aa4b8]">Reviews will open once showtimes are live.</p>
+                    </div>
+                </div>
+                <div className="bg-[#1a2232] border border-white/10 rounded-xl p-5 text-sm text-[#cccccc]">
+                    This movie is getting ready for release. Ratings and comments will be available when showtimes are announced.
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="bg-[#242b3d] rounded-2xl p-6 md:p-8 shadow-xl border border-white/5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#fe7e32]/15 border border-[#fe7e32]/30 flex items-center justify-center">
+                        <MessageCircle className="w-6 h-6 text-[#fe7e32]" />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-bold text-white">Audience Reviews</h3>
+                        <p className="text-sm text-[#9aa4b8]">What moviegoers are saying</p>
+                    </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-[#cccccc]">
+                    {audienceScore !== null && (
+                        <span className="inline-flex items-center gap-1.5 bg-white/5 rounded-full px-3 py-1">
+                            <Star className="w-3.5 h-3.5 text-yellow-400" />
+                            {audienceScore.toFixed(1)} / 10
+                        </span>
+                    )}
+                    <span className="inline-flex items-center gap-1.5 bg-white/5 rounded-full px-3 py-1">
+                        <Users className="w-3.5 h-3.5 text-[#fe7e32]" />
+                        {totalReviews} review{totalReviews === 1 ? '' : 's'}
+                    </span>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                {isAuthenticated ? (
+                    hasUserReview ? (
+                        <div className="bg-[#1a2232] border border-[#fe7e32]/30 rounded-xl p-5">
+                            <p className="text-sm text-white font-semibold mb-1">
+                                You already reviewed this movie.
+                            </p>
+                            <p className="text-xs text-[#9aa4b8]">
+                                Remove your existing rating below if you would like to share an
+                                update.
+                            </p>
+                            {manageFeedback && (
+                                <div
+                                    className={`mt-3 text-sm font-medium ${
+                                        manageFeedback.type === 'success'
+                                            ? 'text-emerald-400'
+                                            : 'text-red-400'
+                                    }`}
+                                    role="status"
+                                >
+                                    {manageFeedback.message}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <form
+                            onSubmit={handleSubmit}
+                            className="bg-[#1a2232] border border-white/10 rounded-xl p-5 space-y-4"
+                        >
+                            <div className="flex items-start gap-3">
+                                <img
+                                    src={account?.avatarUrl || '/default-avatar.jpg'}
+                                    alt={account?.fullName || 'Your avatar'}
+                                    className="w-12 h-12 rounded-full object-cover border border-white/10"
+                                />
+                                <div className="flex-1 space-y-3">
+                                    <div>
+                                        <p className="text-sm text-white font-semibold">
+                                            {account?.fullName || 'Movie Lover'}
+                                        </p>
+                                        <p className="text-xs text-[#9aa4b8]">
+                                            Share your experience
+                                        </p>
+                                    </div>
+                                    {renderInteractiveStars()}
+                                    <textarea
+                                        value={comment}
+                                        onChange={(event) =>
+                                            handleCommentChange(event.target.value)
+                                        }
+                                        placeholder="What did you think about this movie?"
+                                        className="w-full min-h-[110px] bg-[#141a28] text-sm text-white border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#fe7e32] placeholder:text-[#64748b]"
+                                        maxLength={600}
+                                    />
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        {feedback && (
+                                            <span
+                                                className={`text-sm font-medium ${
+                                                    feedback.type === 'success'
+                                                        ? 'text-emerald-400'
+                                                        : 'text-red-400'
+                                                }`}
+                                                role="status"
+                                            >
+                                                {feedback.message}
+                                            </span>
+                                        )}
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#fe7e32] text-white rounded-lg font-semibold shadow-md shadow-[#fe7e32]/20 hover:bg-[#e56e29] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                                        >
+                                            {isSubmitting ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Send className="w-4 h-4" />
+                                            )}
+                                            {isSubmitting ? 'Publishing...' : 'Post Review'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    )
+                ) : (
+                    <div className="bg-[#1a2232] border border-white/10 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <p className="text-white font-semibold text-base">Share your voice</p>
+                            <p className="text-sm text-[#9aa4b8]">
+                                Sign in to leave a review and help other moviegoers.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleSignIn}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#fe7e32] text-white rounded-lg font-semibold shadow-md shadow-[#fe7e32]/20 hover:bg-[#e56e29] transition-colors"
+                        >
+                            <User className="w-4 h-4" />
+                            Sign in to review
+                        </button>
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-10">
+                            <Loader2 className="w-6 h-6 animate-spin text-[#fe7e32]" />
+                        </div>
+                    ) : isError ? (
+                        <div className="text-center py-10 bg-[#1a2232] border border-white/10 rounded-xl">
+                            <p className="text-sm text-red-400">
+                                {typeof error === 'object' &&
+                                error &&
+                                'message' in error &&
+                                typeof (error as { message?: string }).message === 'string'
+                                    ? (error as { message: string }).message
+                                    : 'Unable to load reviews at the moment.'}
+                            </p>
+                        </div>
+                    ) : displayReviews.length ? (
+                        <div className="space-y-4">
+                            {displayReviews.map((review, index) => {
+                                const isOwner = account?.id === review.account.id
+                                return (
+                                    <div
+                                        key={`${review.account.id}-${review.createdAt}-${index}`}
+                                        className={`bg-[#1a2232] border rounded-xl p-5 ${
+                                            isOwner
+                                                ? 'border-[#fe7e32]/40 shadow-[0_0_0_1px_rgba(254,126,50,0.18)]'
+                                                : 'border-white/10'
+                                        }`}
+                                    >
+                                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                            <div className="flex items-start gap-3">
+                                                <img
+                                                    src={
+                                                        review.account.avatarUrl ||
+                                                        '/default-avatar.jpg'
+                                                    }
+                                                    alt={
+                                                        review.account.fullName || 'Reviewer avatar'
+                                                    }
+                                                    className="w-12 h-12 rounded-full object-cover border border-white/10"
+                                                />
+                                                <div>
+                                                    <p className="text-sm font-semibold text-white">
+                                                        {review.account.fullName || 'Movie Lover'}
+                                                    </p>
+                                                    <p className="text-xs text-[#9aa4b8]">
+                                                        {formatReviewDate(review.createdAt)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {renderStaticStars(review.rating)}
+                                                <span className="text-xs text-[#9aa4b8]">
+                                                    {review.rating.toFixed(1)} / 10
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p className="mt-3 text-sm leading-relaxed text-[#cccccc] whitespace-pre-line">
+                                            {review.comment}
+                                        </p>
+                                        {isOwner && (
+                                            <div className="mt-4 flex flex-wrap items-center gap-3">
+                                                <span className="text-xs font-semibold uppercase tracking-wide text-[#fe7e32]">
+                                                    Your review
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDeleteReview}
+                                                    disabled={deleteReview.isPending}
+                                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-300 border border-red-400/40 px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors disabled:opacity-60"
+                                                >
+                                                    {deleteReview.isPending ? (
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                    ) : (
+                                                        <X className="w-3.5 h-3.5" />
+                                                    )}
+                                                    Remove review
+                                                </button>
+                                                {manageFeedback && (
+                                                    <span
+                                                        className={`text-xs font-medium ${
+                                                            manageFeedback.type === 'success'
+                                                                ? 'text-emerald-400'
+                                                                : 'text-red-400'
+                                                        }`}
+                                                    >
+                                                        {manageFeedback.message}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                            {hasNextPage && (
+                                <div className="flex justify-center pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => fetchNextPage()}
+                                        disabled={isFetchingNextPage}
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-transparent text-sm text-white border border-white/20 rounded-lg hover:border-[#fe7e32] hover:text-[#fe7e32] transition-colors disabled:opacity-60"
+                                    >
+                                        {isFetchingNextPage && (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        )}
+                                        {isFetchingNextPage ? 'Loading...' : 'Load more reviews'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-center py-10 bg-[#1a2232] border border-white/10 rounded-xl">
+                            <p className="text-sm text-[#9aa4b8]">
+                                No reviews yet. Be the first to share your thoughts!
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
 // Component cho danh sách phim tương tự
 const SimilarMoviesSection = ({
     genres,
@@ -423,31 +999,41 @@ const SimilarMoviesSection = ({
                 You Might Also Like
             </h3>
             <div className="space-y-4">
-                {similarMovies?.slice(0, 5).map((similar) => (
-                    <Link
-                        key={similar.id}
-                        to="/movie/$movieId"
-                        params={{ movieId: similar.id }}
-                        className="group block"
-                    >
-                        <div className="flex gap-4 bg-[#1a2232]/50 hover:bg-[#1a2232] rounded-lg p-2 transition-all border border-transparent hover:border-[#fe7e32]/50">
-                            <img
-                                src={similar.poster}
-                                alt={similar.name}
-                                className="flex-shrink-0 w-16 h-24 object-cover rounded-md"
-                            />
-                            <div className="flex-1 flex flex-col justify-center min-w-0">
-                                <h4 className="text-white font-semibold text-sm mb-1 line-clamp-2 group-hover:text-[#fe7e32] transition-colors">
-                                    {similar.name}
-                                </h4>
-                                <div className="flex items-center gap-1.5 text-xs text-[#cccccc]">
-                                    <Star className="w-3 h-3 text-yellow-400" />
-                                    <span>8.2</span>
+                {similarMovies?.slice(0, 5).map((similar) => {
+                    const ratingValue = similar.avgRating ?? similar.averageRating
+
+                    return (
+                        <Link
+                            key={similar.id}
+                            to="/movie/$movieId"
+                            params={{ movieId: similar.id }}
+                            className="group block"
+                        >
+                            <div className="flex gap-4 bg-[#1a2232]/50 hover:bg-[#1a2232] rounded-lg p-2 transition-all border border-transparent hover:border-[#fe7e32]/50">
+                                <img
+                                    src={similar.poster}
+                                    alt={similar.name}
+                                    className="flex-shrink-0 w-16 h-24 object-cover rounded-md"
+                                />
+                                <div className="flex-1 flex flex-col justify-center min-w-0">
+                                    <h4 className="text-white font-semibold text-sm mb-1 line-clamp-2 group-hover:text-[#fe7e32] transition-colors">
+                                        {similar.name}
+                                    </h4>
+                                    <div className="flex items-center gap-1.5 text-xs text-[#cccccc]">
+                                        {typeof ratingValue === 'number' ? (
+                                            <>
+                                                <Star className="w-3 h-3 text-yellow-400" />
+                                                <span>{ratingValue.toFixed(1)} / 10</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-[#9aa4b8]">Not rated yet</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </Link>
-                ))}
+                        </Link>
+                    )
+                })}
             </div>
         </div>
     )
@@ -491,10 +1077,42 @@ const TrailerModal = ({ trailerUrl, onClose }: { trailerUrl: string; onClose: ()
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams({ from: '/movie/$movieId' })
     const { data: movie, isLoading, error } = useMovieDetail(movieId)
+    const {
+        data: movieShowTimes = [],
+        isLoading: movieShowTimesLoading,
+        isError: movieShowTimesError,
+        error: movieShowTimesErrorData
+    } = useMovieShowTimes(movieId)
     const [showTrailer, setShowTrailer] = useState(false)
 
     // Scroll to top when component mounts to prevent auto-scroll to bottom
     useScrollToTop()
+
+    const hasAvailableShowTimes = useMemo(() => {
+        if (!Array.isArray(movieShowTimes)) return false
+
+        return movieShowTimes.some(
+            (day) =>
+                Array.isArray(day?.times) &&
+                day.times.some((time) => Boolean(time?.id && time?.time))
+        )
+    }, [movieShowTimes])
+
+    const canSubmitReview = movieShowTimesError
+        ? true
+        : movieShowTimesLoading
+          ? true
+          : hasAvailableShowTimes
+
+    const isUpcoming = !movieShowTimesLoading && !movieShowTimesError && !hasAvailableShowTimes
+    const movieShowTimesErrorMessage = movieShowTimesError
+        ? movieShowTimesErrorData &&
+            typeof movieShowTimesErrorData === 'object' &&
+            'message' in movieShowTimesErrorData &&
+            typeof (movieShowTimesErrorData as { message?: string }).message === 'string'
+            ? (movieShowTimesErrorData as { message: string }).message
+            : undefined
+        : undefined
 
     // Scroll lock effect for modal
     // useEffect(() => {
@@ -551,7 +1169,17 @@ const MovieDetailPage: React.FC = () => {
                         <div className="w-full lg:w-[calc(100%-22rem)] space-y-8">
                             <MovieHero movie={movie} onWatchTrailer={() => setShowTrailer(true)} />
                             <CastSection actors={movie.actors} />
-                            <BookingSection movieId={movieId} />
+                            <BookingSection
+                                movieId={movieId}
+                                isUpcoming={isUpcoming}
+                                showTimesError={movieShowTimesError}
+                                showTimesErrorMessage={movieShowTimesErrorMessage}
+                            />
+                            <ReviewsSection
+                                movieId={movieId}
+                                averageRating={movie.avgRating ?? movie.averageRating}
+                                canSubmit={canSubmitReview}
+                            />
                         </div>
 
                         {/* Right Column - Sidebar */}

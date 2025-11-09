@@ -7,7 +7,7 @@ export interface Movie {
     releaseDate: string
     duration: number
     genres: string[]
-    rating: number
+    rating?: number | null
     status: 'now-showing' | 'coming-soon' | 'ended'
     trailer?: string
     actors: string[]
