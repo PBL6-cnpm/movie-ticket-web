@@ -2,7 +2,7 @@ import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { useBookingStore } from '@/features/movies/stores/booking.store'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { Calendar, Clock, Film, Loader2, MapPin, Star, Ticket, Users } from 'lucide-react'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
@@ -34,17 +34,79 @@ const BranchShowtimesPage: React.FC = () => {
     useScrollToTop()
     const { branchId } = useParams({ from: '/branches/$branchId/showtimes' })
     const navigate = useNavigate()
-    const { data: schedule = [], isLoading, isError, error } = useBranchShowTimes(branchId)
+    const PAGE_SIZE = 6
+    const {
+        data,
+        isLoading,
+        isError,
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useBranchShowTimes(branchId, { pageSize: PAGE_SIZE })
     const { data: branches = [] } = useBranches()
     const { isAuthenticated } = useAuthStore()
     const { setBookingState } = useBookingStore()
+    const loadingRef = useRef(false)
+
+    const schedule = useMemo(() => {
+        return data?.pages.flatMap((page) => page.items) ?? []
+    }, [data])
+
+    const totalAvailable = data?.pages?.[0]?.meta?.total ?? schedule.length
+    const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+    const requestNextPage = useCallback(() => {
+        if (!hasNextPage || loadingRef.current) return
+        loadingRef.current = true
+        fetchNextPage()
+            .catch(() => {
+                // No-op: errors are surfaced via React Query state
+            })
+            .finally(() => {
+                loadingRef.current = false
+            })
+    }, [fetchNextPage, hasNextPage])
+
+    useEffect(() => {
+        if (!hasNextPage) return
+
+        const element = sentinelRef.current
+        if (!element) return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        requestNextPage()
+                    }
+                })
+            },
+            { rootMargin: '400px 0px' }
+        )
+
+        observer.observe(element)
+
+        return () => {
+            observer.disconnect()
+        }
+    }, [hasNextPage, requestNextPage])
+
+    useEffect(() => {
+        if (isLoading) return
+        if (!hasNextPage) return
+        const pagesLoaded = data?.pages?.length ?? 0
+        if (pagesLoaded === 1 && !isFetchingNextPage) {
+            requestNextPage()
+        }
+    }, [data?.pages?.length, hasNextPage, isFetchingNextPage, isLoading, requestNextPage])
 
     const branchInfo = useMemo(() => {
         return branches?.find((branch: Branch) => branch.id === branchId)
     }, [branches, branchId])
 
     const pageTitle = branchInfo?.name || 'Selected Cinema'
-    const hasShowtimes = schedule.length > 0
+    const hasShowtimes = totalAvailable > 0 || schedule.length > 0
 
     const handleShowtimeSelect = useCallback(
         (movieId: string, dateIso: string, showtimeId: string) => {
@@ -130,7 +192,7 @@ const BranchShowtimesPage: React.FC = () => {
                                 <Film className="w-5 h-5 text-[#648ddb]" />
                                 <span>
                                     {hasShowtimes
-                                        ? `${schedule.length} movie${schedule.length > 1 ? 's' : ''} playing`
+                                        ? `${totalAvailable} movie${totalAvailable > 1 ? 's' : ''} playing`
                                         : 'No active screenings'}
                                 </span>
                             </div>
@@ -276,6 +338,31 @@ const BranchShowtimesPage: React.FC = () => {
                                     </div>
                                 )
                             })}
+                            <div ref={sentinelRef} />
+                            {hasNextPage && (
+                                <div className="flex justify-center pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={requestNextPage}
+                                        disabled={isFetchingNextPage}
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-transparent text-sm text-white border border-white/20 rounded-lg hover:border-[#fe7e32] hover:text-[#fe7e32] transition-colors disabled:opacity-60"
+                                    >
+                                        {isFetchingNextPage ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Loading more...
+                                            </>
+                                        ) : (
+                                            'Load more showtimes'
+                                        )}
+                                    </button>
+                                </div>
+                            )}
+                            {isFetchingNextPage && !hasNextPage && (
+                                <div className="flex justify-center pt-4">
+                                    <Loader2 className="w-5 h-5 animate-spin text-[#fe7e32]" />
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

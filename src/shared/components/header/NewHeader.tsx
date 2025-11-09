@@ -4,25 +4,9 @@ import { useAuth } from '@/features/auth/hooks/auth.hook'
 import { apiClient } from '@/shared/api/api-client'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import {
-    Calendar,
-    ChevronDown,
-    Clapperboard,
-    Info,
-    LogOut,
-    MapPin,
-    Popcorn,
-    Star,
-    Ticket,
-    User
-} from 'lucide-react'
+import { ChevronDown, Clapperboard, Info, LogOut, MapPin, Popcorn, Star, User } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import GlobalSearch from './GlobalSearch'
-
-const subNavLinks = [
-    // { name: 'Select Cinema', path: '#', icon: MapPin },
-    { name: 'Showtimes', path: '#', icon: Calendar }
-]
 
 interface Branch {
     id: string
@@ -133,10 +117,6 @@ const NewHeader: React.FC = () => {
                             <button className="flex items-center gap-2 px-4 py-2 bg-[#242b3d] border border-gray-700 rounded-full text-sm text-white hover:bg-[#fe7e32] hover:border-[#fe7e32] transition-colors cursor-pointer">
                                 <Popcorn className="w-4 h-4 text-[#fe7e32]" />
                                 <span>Order Refreshment</span>
-                            </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-[#fe7e32] text-white rounded-full text-sm font-semibold hover:bg-[#e56e29] transition-all cursor-pointer">
-                                <Ticket className="w-4 h-4" />
-                                <span>Book Ticket</span>
                             </button>
                         </div>
                     </div>
@@ -262,17 +242,6 @@ const NewHeader: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                            {subNavLinks.map((link) => (
-                                <Link
-                                    key={link.name}
-                                    to={'/'}
-                                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-                                >
-                                    {' '}
-                                    <link.icon className="w-4 h-4 text-[#648ddb]" />
-                                    <span>{link.name}</span>
-                                </Link>
-                            ))}
                         </div>
                         <div>
                             <Link

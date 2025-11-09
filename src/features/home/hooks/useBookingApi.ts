@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { apiClient } from '../../../shared/api/api-client'
 
 interface Branch {
@@ -89,12 +89,34 @@ interface BranchShowTimesItem {
     }>
 }
 
+interface BranchShowTimesMeta {
+    limit?: number
+    offset?: number
+    total?: number
+    totalPages?: number
+}
+
 interface BranchShowTimesResponse {
     success: boolean
     statusCode: number
     message: string
     code: string
-    data: BranchShowTimesItem[] | { items: BranchShowTimesItem[] }
+    data:
+        | BranchShowTimesItem[]
+        | {
+              items: BranchShowTimesItem[]
+              meta?: BranchShowTimesMeta
+          }
+}
+
+interface BranchShowTimesPageResult {
+    items: BranchShowTimesItem[]
+    meta: {
+        limit: number
+        offset: number
+        total: number
+        totalPages: number
+    }
 }
 
 const fetchBranches = async (): Promise<Branch[]> => {
@@ -186,26 +208,87 @@ const sanitizeBranchShowTimes = (items: BranchShowTimesItem[]): BranchShowTimesI
         .filter((item) => item.showTimes.length > 0)
 }
 
-const fetchBranchShowTimes = async (branchId: string): Promise<BranchShowTimesItem[]> => {
+const normalizeBranchShowTimesMeta = (
+    meta: BranchShowTimesMeta | undefined,
+    limit: number,
+    offset: number,
+    fallbackTotal: number
+) => {
+    const safeLimit = meta?.limit ?? limit
+    const safeOffset = meta?.offset ?? offset
+    const safeTotal = meta?.total ?? fallbackTotal
+    const computedTotalPages = (() => {
+        if (meta?.totalPages !== undefined) {
+            return meta.totalPages
+        }
+        if (!safeLimit || safeLimit <= 0) {
+            return safeTotal > 0 ? 1 : 0
+        }
+        if (!safeTotal || safeTotal <= 0) {
+            return 0
+        }
+        return Math.ceil(safeTotal / safeLimit)
+    })()
+
+    return {
+        limit: safeLimit,
+        offset: safeOffset,
+        total: safeTotal,
+        totalPages: computedTotalPages
+    }
+}
+
+const fetchBranchShowTimesPage = async (
+    branchId: string,
+    limit: number,
+    offset: number
+): Promise<BranchShowTimesPageResult> => {
     if (!branchId) {
-        return []
+        return {
+            items: [],
+            meta: {
+                limit,
+                offset,
+                total: 0,
+                totalPages: 0
+            }
+        }
     }
 
     const response = await apiClient.get<BranchShowTimesResponse>(
-        `/branches/${branchId}/show-times`
+        `/branches/${branchId}/show-times`,
+        {
+            params: {
+                limit,
+                offset
+            }
+        }
     )
 
     if (response.data.success && response.data.data) {
         const payload = response.data.data
-        let rawData: BranchShowTimesItem[] = []
+        let rawItems: BranchShowTimesItem[] = []
+        let meta: BranchShowTimesMeta | undefined
 
         if (Array.isArray(payload)) {
-            rawData = payload
-        } else if (Array.isArray(payload.items)) {
-            rawData = payload.items
+            rawItems = payload
+        } else {
+            rawItems = Array.isArray(payload.items) ? payload.items : []
+            meta = payload.meta
         }
 
-        return sanitizeBranchShowTimes(rawData)
+        const sanitizedItems = sanitizeBranchShowTimes(rawItems)
+        const normalizedMeta = normalizeBranchShowTimesMeta(
+            meta,
+            limit,
+            offset,
+            meta?.total ?? sanitizedItems.length
+        )
+
+        return {
+            items: sanitizedItems,
+            meta: normalizedMeta
+        }
     }
 
     console.error('❌ API DEBUG - Failed to fetch branch showtimes:', response.data)
@@ -261,11 +344,26 @@ export const useBranchMovieShowTimes = (movieId: string, branchId: string) => {
     })
 }
 
-export const useBranchShowTimes = (branchId: string) => {
-    return useQuery({
-        queryKey: ['branchShowTimes', branchId],
-        queryFn: () => fetchBranchShowTimes(branchId),
+export const useBranchShowTimes = (branchId: string, options?: { pageSize?: number }) => {
+    const pageSize = options?.pageSize ?? 6
+
+    return useInfiniteQuery({
+        queryKey: ['branchShowTimes', branchId, pageSize],
         enabled: !!branchId,
+        initialPageParam: 0,
+        queryFn: ({ pageParam }) =>
+            fetchBranchShowTimesPage(
+                branchId,
+                pageSize,
+                typeof pageParam === 'number' ? pageParam : 0
+            ),
+        getNextPageParam: (lastPage) => {
+            const nextOffset = lastPage.meta.offset + lastPage.items.length
+            if (nextOffset >= lastPage.meta.total) {
+                return undefined
+            }
+            return nextOffset
+        },
         staleTime: 2 * 60 * 1000,
         gcTime: 5 * 60 * 1000
     })
