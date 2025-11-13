@@ -1,7 +1,7 @@
 import ProtectedRoute from '@/features/auth/routes/ProtectedRoute'
 import { useEffect, useState } from 'react'
 import { useBooking, type BookingData } from '../hooks/useBooking'
-import { Armchair, Calendar, MapPin, Popcorn, X } from 'lucide-react';
+import { Armchair, Calendar, CheckCircle, MapPin, Popcorn, X, XCircle } from 'lucide-react';
 
 const Pagination = ({ currentPage, totalPages, onPageChange, isLoading }: { currentPage: number, totalPages: number, onPageChange: (page: number) => void, isLoading: boolean }) => {
     if (totalPages <= 1) return null;
@@ -145,7 +145,7 @@ export default function BookingHistoryPage() {
                                     </div>
 
                                     {/* Booking Details */}
-                                    <div className="flex-1 flex flex-col p-4">
+                                    <div className="flex-1 flex flex-col p-11">
                                          <div className="flex items-start justify-between mb-3">
                                             <div>
                                                 <h3 className="font-bold text-xl text-primary">
@@ -155,10 +155,20 @@ export default function BookingHistoryPage() {
                                                     Booked on: {formatDate(booking.dateTimeBooking)}
                                                 </p>
                                             </div>
-                                            <div className="text-right flex-shrink-0">
-                                                <p className="font-bold text-xl text-primary">
+                                            <div className="flex items-center gap-5">
+                                                <div className="font-bold text-xl text-primary">
                                                     {formatPrice(booking.totalBookingPrice)}
-                                                </p>
+                                                </div>
+                                                <div className="relative group w-fit pb-1">
+                                                    {booking.checkInStatus ? (
+                                                        <CheckCircle className="text-green-500 w-5 h-5" />
+                                                    ) : (
+                                                        <XCircle className="text-gray-400 w-5 h-5" />
+                                                    )}
+                                                    <div className="absolute left-1/2 -translate-x-1/2 mt-2 px-1 py-1 rounded-md text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition bg-gray-700 whitespace-nowrap z-50">
+                                                        {booking.checkInStatus ? 'Checked in' : 'Not checked in'}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex-1 space-y-3 text-sm text-secondary">
