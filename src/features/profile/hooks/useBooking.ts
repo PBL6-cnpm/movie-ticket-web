@@ -9,6 +9,7 @@ export interface BookingData {
     dateTimeBooking: string
     qrUrl: string | null
     status: string // Added status for potential future use
+    checkInStatus: boolean
     showTime: {
         id: string
         timeStart: string
