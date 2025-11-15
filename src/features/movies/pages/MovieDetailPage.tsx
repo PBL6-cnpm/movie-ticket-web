@@ -24,7 +24,7 @@ import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
 import {
-    useBranches,
+    useBranchesByMovie,
     useBranchMovieShowTimes,
     useMovieShowTimes,
     type Branch,
@@ -224,7 +224,7 @@ const BookingSection = ({
     const [selectedDate, setSelectedDate] = useState('')
     const [selectedShowtime, setSelectedShowtime] = useState('')
 
-    const { data: branches = [], isLoading: branchesLoading } = useBranches()
+    const { data: branches = [], isLoading: branchesLoading } = useBranchesByMovie(movieId)
     const { data: showTimeDays = [], isLoading: showTimesLoading } = useBranchMovieShowTimes(
         movieId,
         selectedCinema
@@ -357,7 +357,8 @@ const BookingSection = ({
                 <Ticket className="w-10 h-10 text-[#fe7e32] mb-3" />
                 <h3 className="text-lg font-semibold text-white mb-2">Upcoming Release</h3>
                 <p className="text-sm text-[#cccccc] max-w-md">
-                    This movie does not have scheduled showtimes yet. Please check back soon once screenings are announced.
+                    This movie does not have scheduled showtimes yet. Please check back soon once
+                    screenings are announced.
                 </p>
             </div>
         )
@@ -701,11 +702,14 @@ const ReviewsSection = ({
                     </div>
                     <div>
                         <h3 className="text-2xl font-bold text-white">Audience Reviews</h3>
-                        <p className="text-sm text-[#9aa4b8]">Reviews will open once showtimes are live.</p>
+                        <p className="text-sm text-[#9aa4b8]">
+                            Reviews will open once showtimes are live.
+                        </p>
                     </div>
                 </div>
                 <div className="bg-[#1a2232] border border-white/10 rounded-xl p-5 text-sm text-[#cccccc]">
-                    This movie is getting ready for release. Ratings and comments will be available when showtimes are announced.
+                    This movie is getting ready for release. Ratings and comments will be available
+                    when showtimes are announced.
                 </div>
             </div>
         )
@@ -1107,9 +1111,9 @@ const MovieDetailPage: React.FC = () => {
     const isUpcoming = !movieShowTimesLoading && !movieShowTimesError && !hasAvailableShowTimes
     const movieShowTimesErrorMessage = movieShowTimesError
         ? movieShowTimesErrorData &&
-            typeof movieShowTimesErrorData === 'object' &&
-            'message' in movieShowTimesErrorData &&
-            typeof (movieShowTimesErrorData as { message?: string }).message === 'string'
+          typeof movieShowTimesErrorData === 'object' &&
+          'message' in movieShowTimesErrorData &&
+          typeof (movieShowTimesErrorData as { message?: string }).message === 'string'
             ? (movieShowTimesErrorData as { message: string }).message
             : undefined
         : undefined
