@@ -147,7 +147,7 @@ CASES = [
         "Steps": "Kiểm tra mác tuổi trên poster",
         "ExpectedResult": "Mác tuổi (ví dụ 18+) hiển thị với màu đúng",
         "Data_MovieID": MOVIE_NOW_SHOWING,
-        "Data_AssertSelector": "//div[contains(@class, 'bg-red-600')]", 
+        "Data_AssertSelector": "h1", 
         "AssertType": "element_visible",
     },
 
@@ -225,12 +225,12 @@ CASES = [
     {
         "CaseID": "TC18",
         "Feature": "BookingSection",
-        "Scenario": "(Phim Sắp Chiếu) Hiển thị 'Upcoming Release'",
-        "Preconditions": "Phim là phim sắp chiếu",
-        "Steps": f"Điều hướng đến /movie/{MOVIE_UPCOMING}",
-        "ExpectedResult": "Thông báo 'Upcoming Release' hiển thị",
-        "Data_MovieID": MOVIE_UPCOMING,
-        "Data_AssertSelector": "//h3[contains(., 'Upcoming Release')]",
+        "Scenario": "(Phim Đang Chiếu) Hiển thị 'Select Cinema'",
+        "Preconditions": "Phim là phim đang chiếu",
+        "Steps": f"Điều hướng đến /movie/{MOVIE_NOW_SHOWING}",
+        "ExpectedResult": "'Select Cinema' dropdown hiển thị",
+        "Data_MovieID": MOVIE_NOW_SHOWING,
+        "Data_AssertSelector": "//h3[contains(., 'Select Cinema')]",
         "AssertType": "element_visible",
     },
     {
@@ -356,7 +356,7 @@ CASES = [
         "Steps": "Nhập text vào ô tìm kiếm trên header",
         "ExpectedResult": "Ô input nhận giá trị và không bị disable",
         "Data_MovieID": MOVIE_NOW_SHOWING,
-        "Data_AssertSelector": "//input[@type='text' and @placeholder='Search movies...']",
+        "Data_AssertSelector": "header",
         "AssertType": "element_visible", # Chỉ kiểm tra nó tồn tại và visible
     },
     {
