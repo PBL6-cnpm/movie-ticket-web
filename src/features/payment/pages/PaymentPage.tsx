@@ -1,18 +1,19 @@
 import PaymentForm from '@/features/payment/components/PaymentForm'
-import { useCancelPayment } from '@/features/payment/hooks/usePayment'
 import PageTransition from '@/shared/components/ui/PageTransition'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Clock, Loader2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
+
+const PAYMENT_SESSION_DURATION = 5 * 60 * 1000 // 5 minute in milliseconds
 
 const PaymentPage: React.FC = () => {
     const navigate = useNavigate()
     const [clientSecret, setClientSecret] = useState<string | null>(null)
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
     const [stripeConfigError, setStripeConfigError] = useState<string | null>(null)
-    const cancelPaymentMutation = useCancelPayment()
+    const [timeLeft, setTimeLeft] = useState<number | null>(null)
 
     useEffect(() => {
         // Retrieve the client secret and booking ID from session storage
@@ -30,9 +31,6 @@ const PaymentPage: React.FC = () => {
         const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined
 
         if (!publishableKey || publishableKey.trim().length === 0) {
-            console.error(
-                'Stripe publishable key is missing. Please set VITE_STRIPE_PUBLISHABLE_KEY.'
-            )
             setStripeConfigError(
                 'Payment service is currently unavailable. Please contact support.'
             )
@@ -48,21 +46,55 @@ const PaymentPage: React.FC = () => {
         }
     }, [])
 
-    const handleCancelAndGoBack = async () => {
-        if (clientSecret) {
-            try {
-                await cancelPaymentMutation.mutateAsync(clientSecret)
-                console.log('Payment intent cancelled successfully.')
-            } catch (error) {
-                console.error('Failed to cancel payment intent:', error)
-            }
+    useEffect(() => {
+        // Only run timer logic when clientSecret exists
+        if (!clientSecret) return;
+
+        const timerKey = `payment_timer_end_${clientSecret}`
+        const storedEndTime = sessionStorage.getItem(timerKey)
+        let endTime: number
+
+        if (storedEndTime) {
+            endTime = parseInt(storedEndTime, 10)
+        } else {
+            endTime = new Date().getTime() + PAYMENT_SESSION_DURATION
+            sessionStorage.setItem(timerKey, endTime.toString())
         }
-        // Clean up session storage
-        sessionStorage.removeItem('payment_client_secret')
 
-        navigate({ to: '/booking' })
-    }
+        const intervalId = setInterval(() => {
+            const remaining = endTime - new Date().getTime()
+            setTimeLeft(remaining > 0 ? remaining : 0)
 
+            if (remaining <= 0) {
+                clearInterval(intervalId)
+                sessionStorage.removeItem(timerKey)
+                setTimeout(() => {
+                    navigate({ to: '/booking' })
+                }, 100)
+            }
+        }, 1000);
+
+        // Initial update to avoid 1-second delay
+        const initialRemaining = endTime - new Date().getTime()
+        setTimeLeft(initialRemaining > 0 ? initialRemaining : 0)
+
+        return () => clearInterval(intervalId)
+    }, [clientSecret])
+
+    useEffect(() => {
+        if (timeLeft === 0) {
+            console.log('Payment session has expired. Cancelling payment.')
+        }
+    }, [timeLeft])
+
+    const formatTime = (ms: number | null): string => {
+        if (ms === null || ms <= 0) return '00:00'
+        const minutes = Math.floor(ms / 60000)
+        const seconds = Math.floor((ms % 60000) / 1000)
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    };
+
+    // --- RENDER LOGIC ---
     if (stripeConfigError) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
@@ -82,10 +114,10 @@ const PaymentPage: React.FC = () => {
                     </button>
                 </div>
             </div>
-        )
+        );
     }
 
-    if (!clientSecret || !stripePromise) {
+    if (!clientSecret || !stripePromise || timeLeft === null) {
         return (
             <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-3 text-slate-700">
                 <Loader2 className="w-8 h-8 text-slate-800 animate-spin" />
@@ -97,28 +129,32 @@ const PaymentPage: React.FC = () => {
     return (
         <PageTransition>
             <div className="min-h-screen bg-gray-100">
-                {/* Header */}
                 <header className="bg-white shadow-sm">
                     <div className="container mx-auto px-4 py-4">
-                        <div className="flex items-center justify-between">
-                            <button
-                                onClick={handleCancelAndGoBack}
-                                className="flex items-center gap-2 text-gray-700 hover:text-slate-900 transition-colors"
-                            >
-                                <ArrowLeft className="w-5 h-5" />
-                                Back to Booking
-                            </button>
-                            <h1 className="text-xl font-bold text-slate-800">
-                                Complete Your Payment
-                            </h1>
-                            <div className="w-32" /> {/* Spacer */}
-                        </div>
+                        <h1 className="text-xl font-bold text-slate-800 text-center w-full">
+                            Complete Your Payment
+                        </h1>
                     </div>
                 </header>
 
                 {/* Main Content */}
-                <main className="container mx-auto px-4 py-8">
+                <main className="container mx-auto px-4 py-8 ">
                     <div className="max-w-lg mx-auto">
+                        <div className={`text-center p-4 rounded-lg ${
+                            timeLeft && timeLeft <= 30000 
+                                ? 'bg-red-50 border border-red-200' 
+                                : 'bg-yellow-50 border border-yellow-200'
+                        }`}>
+                            <div className="flex items-center justify-center gap-2 text-gray-600">
+                                <Clock className="w-5 h-5" />
+                                <span className="font-medium">Time left to complete payment</span>
+                            </div>
+                            <p className={`text-3xl font-bold tracking-wider mt-1 ${
+                                timeLeft && timeLeft <= 30000 ? 'text-red-600' : 'text-slate-800'
+                            }`}>
+                                {formatTime(timeLeft)}
+                            </p>
+                        </div>
                         <Elements options={{ clientSecret }} stripe={stripePromise}>
                             <PaymentForm clientSecret={clientSecret} />
                         </Elements>

@@ -1,6 +1,6 @@
 import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { Loader2 } from 'lucide-react'
-import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 
 interface PaymentFormProps {
     clientSecret: string
@@ -11,28 +11,6 @@ export default function PaymentForm({ clientSecret }: PaymentFormProps) {
     const elements = useElements()
     const [isProcessing, setIsProcessing] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string>('')
-    const [timeLeft, setTimeLeft] = useState(5 * 60) // 5 minutes in seconds
-
-    // Use useRef to store the end time. This persists across re-renders.
-    const endTimeRef = useRef<number>(Date.now() + 5 * 60 * 1000)
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const now = Date.now()
-            const remainingTime = Math.round((endTimeRef.current - now) / 1000)
-
-            if (remainingTime <= 0) {
-                setTimeLeft(0)
-                clearInterval(timer)
-                window.location.href = '/booking'
-            } else {
-                setTimeLeft(remainingTime)
-            }
-        }, 1000)
-
-        // Clean up the timer when the component unmounts
-        return () => clearInterval(timer)
-    }, []) // Empty dependency array ensures this effect runs only once on mount
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
@@ -76,20 +54,8 @@ export default function PaymentForm({ clientSecret }: PaymentFormProps) {
         }
     }
 
-    // Helper function to format time into MM:SS format
-    const formatTime = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60)
-        const remainingSeconds = seconds % 60
-        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`
-    }
-
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="font-semibold text-lg text-yellow-800">Time left to complete payment</p>
-                <p className="text-3xl font-mono text-yellow-900 mt-1">{formatTime(timeLeft)}</p>
-            </div>
-
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
                 <PaymentElement 
