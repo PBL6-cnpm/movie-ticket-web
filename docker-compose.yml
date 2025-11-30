@@ -1,15 +1,21 @@
 version: '3.9'
 
 services:
-  frontend:
-    build: .
-    container_name: movie-ticket-web
-    ports:
-      - "3002:80"
-    restart: always
-    healthcheck:
-      test: ["CMD", "pgrep", "nginx"]
-      interval: 1m30s
-      timeout: 30s
-      retries: 3
-      start_period: 30s
+    frontend:
+        build:
+            context: .
+            args:
+                VITE_BASE_URL: ${VITE_BASE_URL}
+                VITE_SERVER_URL: ${VITE_SERVER_URL}
+                VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
+                VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+        container_name: movie-ticket-web
+        ports:
+            - '3002:80'
+        restart: always
+        healthcheck:
+            test: ['CMD', 'pgrep', 'nginx']
+            interval: 1m30s
+            timeout: 30s
+            retries: 3
+            start_period: 30s
