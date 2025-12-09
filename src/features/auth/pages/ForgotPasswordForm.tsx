@@ -51,11 +51,18 @@ const ForgotPasswordForm = () => {
         }
 
         return (
-            <Card className="w-full max-w-md bg-surface/80 backdrop-blur-lg border-none shadow-2xl">
+            <Card
+                className="w-full max-w-md backdrop-blur-lg bg-surface border border-surface shadow-2xl"
+                style={{
+                    backgroundColor: 'rgba(36, 43, 61, 0.8)',
+                    borderColor: 'rgba(36, 43, 61, 0.5)',
+                    borderRadius: '1px'
+                }}
+            >
                 <CardHeader className="text-center">
                     <h2 className="text-2xl font-bold text-primary">Forgot Password?</h2>
                     <p className="text-secondary text-sm pt-1">
-                        Enter your email and we'll help you out.
+                        Enter your email and we will help you out.
                     </p>
                 </CardHeader>
                 <CardContent>
@@ -95,8 +102,8 @@ const ForgotPasswordForm = () => {
     }
 
     return (
-        <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 bg-brand">
-            <div className="hidden lg:block relative">
+        <div className="min-h-screen w-full bg-brand flex items-center justify-center">
+            {/* <div className="hidden lg:block relative">
                 <img 
                     src="https://source.unsplash.com/random/1600x900?abstract,security,dark"
                     alt="Abstract security background"
@@ -106,10 +113,8 @@ const ForgotPasswordForm = () => {
                 <div className="absolute top-8 left-8 text-2xl font-bold text-white">
                     Cine<span className="text-[#fe7e32]">STECH</span>
                 </div>
-            </div>
-            <div className="flex items-center justify-center p-4">
-                {renderContent()}
-            </div>
+            </div> */}
+            {renderContent()}
         </div>
     )
 }
