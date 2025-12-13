@@ -18,14 +18,3 @@ export const useCreatePaymentIntent = () => {
         }
     })
 }
-
-export const useCancelPayment = () => {
-    return useMutation({
-        mutationFn: async (clientSecret: string) => {
-            const { data } = await apiClient.post('/bookings/cancel-payment', {
-                clientSecret
-            })
-            return data
-        }
-    })
-}

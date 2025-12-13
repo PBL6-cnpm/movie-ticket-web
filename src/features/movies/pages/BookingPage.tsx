@@ -511,7 +511,7 @@ const BookingPage: React.FC = () => {
                                             ) : (
                                                 <button
                                                     onClick={() => setShowVoucherModal(true)}
-                                                    className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 bg-[#fe7e32]/10 hover:bg-[#fe7e32]/20 text-[#fe7e32] hover:text-white rounded-lg transition-all font-medium border-2 border-[#fe7e32]/30 hover:border-[#fe7e32]"
+                                                    className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 text-sm bg-[#fe7e32]/10 hover:bg-[#fe7e32]/20 text-[#fe7e32] hover:text-white rounded-lg transition-all font-medium border-2 border-[#fe7e32]/30 hover:border-[#fe7e32]"
                                                 >
                                                     <Tag className="w-5 h-5" />
                                                     Apply Vouchers
@@ -520,7 +520,7 @@ const BookingPage: React.FC = () => {
                                             <button
                                                 onClick={handleBookingConfirm}
                                                 disabled={!isSeatInfoReady || isProcessingBooking}
-                                                className="w-full bg-[#fe7e32] hover:bg-[#e56e29] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg disabled:shadow-none transform hover:scale-105 disabled:scale-100 flex items-center justify-center gap-2"
+                                                className="w-full bg-[#fe7e32] hover:bg-[#e56e29] disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-bold py-3 px-6 rounded-lg transition-all shadow-lg disabled:shadow-none transform hover:scale-105 disabled:scale-100 flex items-center justify-center gap-2 cursor-pointer"
                                             >
                                                 {isProcessingBooking ? (
                                                     <>
