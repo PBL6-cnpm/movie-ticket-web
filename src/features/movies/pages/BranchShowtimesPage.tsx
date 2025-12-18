@@ -35,15 +35,8 @@ const BranchShowtimesPage: React.FC = () => {
     const { branchId } = useParams({ from: '/branches/$branchId/showtimes' })
     const navigate = useNavigate()
     const PAGE_SIZE = 6
-    const {
-        data,
-        isLoading,
-        isError,
-        error,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage
-    } = useBranchShowTimes(branchId, { pageSize: PAGE_SIZE })
+    const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+        useBranchShowTimes(branchId, { pageSize: PAGE_SIZE })
     const { data: branches = [] } = useBranches()
     const { isAuthenticated } = useAuthStore()
     const { setBookingState } = useBookingStore()
@@ -127,7 +120,15 @@ const BranchShowtimesPage: React.FC = () => {
             }
 
             setBookingState(payload)
-            navigate({ to: '/booking' })
+            navigate({
+                to: '/booking',
+                search: {
+                    branchId: payload.branchId,
+                    movieId: payload.movieId,
+                    date: payload.date,
+                    showtimeId: payload.showtimeId
+                }
+            })
         },
         [branchId, isAuthenticated, navigate, setBookingState]
     )

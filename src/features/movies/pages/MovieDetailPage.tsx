@@ -60,9 +60,52 @@ const formatReviewDate = (dateString: string) =>
         year: 'numeric'
     })
 
+const WEEKDAY_LABELS = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+]
+
+const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000
+
+const toVietnamDate = (isoString?: string | null) => {
+    if (!isoString) return null
+
+    const parsed = new Date(isoString)
+    if (Number.isNaN(parsed.getTime())) return null
+
+    return new Date(parsed.getTime() + VIETNAM_OFFSET_MS)
+}
+
+const formatVietnamDateValue = (isoString: string) => {
+    const vietnamDate = toVietnamDate(isoString)
+    if (!vietnamDate) return ''
+
+    const year = vietnamDate.getUTCFullYear()
+    const month = String(vietnamDate.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(vietnamDate.getUTCDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}
+
+const formatVietnamDateLabel = (isoString: string) => {
+    const vietnamDate = toVietnamDate(isoString)
+    if (!vietnamDate) return ''
+
+    const weekday = WEEKDAY_LABELS[vietnamDate.getUTCDay()]
+    const day = String(vietnamDate.getUTCDate()).padStart(2, '0')
+    const month = String(vietnamDate.getUTCMonth() + 1).padStart(2, '0')
+
+    return `${weekday}, ${day}/${month}`
+}
+
 // ----- SUB-COMPONENTS -----
 
-// Component cho phần Hero của phim
+// Component for the movie hero section
 interface Movie {
     id: string
     name: string
@@ -172,7 +215,7 @@ const MovieHero = ({ movie, onWatchTrailer }: { movie: Movie; onWatchTrailer: ()
     </div>
 )
 
-// Component cho danh sách diễn viên
+// Component for the cast list
 const CastSection = ({
     actors
 }: {
@@ -207,7 +250,7 @@ const CastSection = ({
     </div>
 )
 
-// Component cho phần đặt vé
+// Component for the booking section
 const BookingSection = ({
     movieId,
     isUpcoming,
@@ -245,14 +288,8 @@ const BookingSection = ({
     // Available dates from showtimes
     const availableDates = useMemo(() => {
         return sanitizedShowTimeDays.map((day: ShowTimeDay) => ({
-            value: day.dayOfWeek.value.split('T')[0],
-            label: `${day.dayOfWeek.name}, ${new Date(day.dayOfWeek.value).toLocaleDateString(
-                'vi-VN',
-                {
-                    day: '2-digit',
-                    month: '2-digit'
-                }
-            )}`
+            value: formatVietnamDateValue(day.dayOfWeek.value),
+            label: formatVietnamDateLabel(day.dayOfWeek.value)
         }))
     }, [sanitizedShowTimeDays])
 
@@ -260,7 +297,7 @@ const BookingSection = ({
     const availableShowtimes = useMemo(() => {
         if (!selectedDate) return []
         const selectedDay = sanitizedShowTimeDays.find(
-            (day: ShowTimeDay) => day.dayOfWeek.value.split('T')[0] === selectedDate
+            (day: ShowTimeDay) => formatVietnamDateValue(day.dayOfWeek.value) === selectedDate
         )
         return selectedDay?.times || []
     }, [sanitizedShowTimeDays, selectedDate])
@@ -269,7 +306,7 @@ const BookingSection = ({
         if (!selectedDate) return
 
         const exists = sanitizedShowTimeDays.some(
-            (day: ShowTimeDay) => day.dayOfWeek.value.split('T')[0] === selectedDate
+            (day: ShowTimeDay) => formatVietnamDateValue(day.dayOfWeek.value) === selectedDate
         )
 
         if (!exists) {
@@ -311,6 +348,13 @@ const BookingSection = ({
             date: selectedDate
         }
 
+        const bookingSearch = {
+            branchId: bookingPayload.branchId,
+            movieId: bookingPayload.movieId,
+            date: bookingPayload.date,
+            showtimeId: bookingPayload.showtimeId
+        }
+
         if (!isAuthenticated && !token) {
             setBookingState({
                 ...bookingPayload,
@@ -319,7 +363,7 @@ const BookingSection = ({
             navigate({ to: '/login' })
         } else {
             setBookingState(bookingPayload)
-            navigate({ to: '/booking' })
+            navigate({ to: '/booking', search: bookingSearch })
         }
     }
 
@@ -967,7 +1011,7 @@ const ReviewsSection = ({
     )
 }
 
-// Component cho danh sách phim tương tự
+// Component for the similar movies list
 const SimilarMoviesSection = ({
     genres,
     currentMovieId
@@ -1043,9 +1087,9 @@ const SimilarMoviesSection = ({
     )
 }
 
-// Component cho Modal Trailer
+// Component for the trailer modal
 const TrailerModal = ({ trailerUrl, onClose }: { trailerUrl: string; onClose: () => void }) => {
-    // Ngăn chặn việc đóng modal khi click vào nội dung bên trong
+    // Prevent closing the modal when the inner content is clicked
     const handleContentClick = (e: React.MouseEvent) => e.stopPropagation()
 
     return (

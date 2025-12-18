@@ -12,7 +12,7 @@ import { useBookingStore } from '@/features/movies/stores/booking.store'
 import type { SelectedRefreshment } from '@/features/movies/types/refreshment.types'
 import type { AppliedVoucher, Voucher } from '@/features/movies/types/voucher.types'
 import { useCreatePaymentIntent } from '@/features/payment/hooks/usePayment'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import {
     ArrowLeft,
     Calendar,
@@ -30,11 +30,52 @@ import React, { useEffect, useMemo, useState } from 'react'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
 import { useBranches, useMovieShowTimes } from '../../home/hooks/useBookingApi'
+import { bookingRoute } from '../routes/BookingRoute'
+
+const WEEKDAY_LABELS = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+]
+
+const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000
+
+const parseSessionDate = (rawDate?: string | null) => {
+    if (!rawDate) return null
+
+    const parsed = new Date(rawDate)
+    if (Number.isNaN(parsed.getTime())) {
+        return null
+    }
+
+    return new Date(parsed.getTime() + VIETNAM_OFFSET_MS)
+}
+
+const formatSessionDateLabel = (date: Date | null) => {
+    if (!date) return null
+
+    const weekday = WEEKDAY_LABELS[date.getUTCDay()]
+    const day = String(date.getUTCDate()).padStart(2, '0')
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+
+    return `${weekday}, ${day}/${month}`
+}
 
 const BookingPage: React.FC = () => {
     console.log('=== BookingPage mounted ===')
     const navigate = useNavigate()
-    const { movieId, showtimeId, branchId, date } = useBookingStore()
+    const searchParams = useSearch({ from: bookingRoute.id })
+    const {
+        branchId: branchIdFromSearch,
+        movieId: movieIdFromSearch,
+        date: dateFromSearch,
+        showtimeId: showtimeIdFromSearch
+    } = searchParams
+    const { movieId, showtimeId, branchId, date, setBookingState } = useBookingStore()
 
     const [selectedSeats, setSelectedSeats] = useState<string[]>([])
     const [selectedRefreshments, setSelectedRefreshments] = useState<SelectedRefreshment[]>([])
@@ -69,11 +110,65 @@ const BookingPage: React.FC = () => {
         : 'Preparing payment...'
 
     useEffect(() => {
+        const hasSearchParams = Boolean(
+            branchIdFromSearch || movieIdFromSearch || dateFromSearch || showtimeIdFromSearch
+        )
+
+        if (!hasSearchParams) {
+            return
+        }
+
+        const nextState = {
+            branchId: branchIdFromSearch ?? branchId,
+            movieId: movieIdFromSearch ?? movieId,
+            date: dateFromSearch ?? date,
+            showtimeId: showtimeIdFromSearch ?? showtimeId
+        }
+
+        const shouldHydrate =
+            nextState.branchId !== branchId ||
+            nextState.movieId !== movieId ||
+            nextState.date !== date ||
+            nextState.showtimeId !== showtimeId
+
+        if (shouldHydrate) {
+            setBookingState(nextState)
+        }
+    }, [
+        branchId,
+        branchIdFromSearch,
+        date,
+        dateFromSearch,
+        movieId,
+        movieIdFromSearch,
+        setBookingState,
+        showtimeId,
+        showtimeIdFromSearch
+    ])
+
+    useEffect(() => {
         if (!movieLoading && (!movieId || !showtimeId)) {
+            const hasSearchParams = Boolean(
+                branchIdFromSearch || movieIdFromSearch || dateFromSearch || showtimeIdFromSearch
+            )
+
+            if (hasSearchParams) {
+                return
+            }
+
             console.warn('Missing booking info in store, redirecting to home.')
             navigate({ to: '/' })
         }
-    }, [movieId, showtimeId, navigate, movieLoading])
+    }, [
+        branchIdFromSearch,
+        dateFromSearch,
+        movieId,
+        movieIdFromSearch,
+        navigate,
+        movieLoading,
+        showtimeId,
+        showtimeIdFromSearch
+    ])
 
     const refreshmentsTotalCost = useMemo(() => {
         return selectedRefreshments.reduce(
@@ -123,14 +218,8 @@ const BookingPage: React.FC = () => {
     )
 
     const sessionDateSource = currentShowtimeGroup?.dayOfWeek.value || date
-    const sessionDate = sessionDateSource ? new Date(sessionDateSource) : null
-    const formattedSessionDate = sessionDate
-        ? sessionDate.toLocaleDateString('vi-VN', {
-              weekday: 'long',
-              day: '2-digit',
-              month: '2-digit'
-          })
-        : null
+    const sessionDate = parseSessionDate(sessionDateSource)
+    const formattedSessionDate = formatSessionDateLabel(sessionDate)
 
     const selectedBranch = branchId ? branches.find((branch) => branch.id === branchId) : null
     const roomName = seatLayoutData?.roomName ?? null
@@ -284,14 +373,17 @@ const BookingPage: React.FC = () => {
         return `${hours}h ${mins}m`
     }
 
-    const groupedSeats = selectedSeatsInfo.reduce((acc, seat) => {
-        const typeName = seat.type.name;
-        if (!acc[typeName]) {
-            acc[typeName] = { seats: [], price: seat.type.price };
-        }
-        acc[typeName].seats.push(seat.name);
-        return acc;
-    }, {} as Record<string, { seats: string[]; price: number }>);
+    const groupedSeats = selectedSeatsInfo.reduce(
+        (acc, seat) => {
+            const typeName = seat.type.name
+            if (!acc[typeName]) {
+                acc[typeName] = { seats: [], price: seat.type.price }
+            }
+            acc[typeName].seats.push(seat.name)
+            return acc
+        },
+        {} as Record<string, { seats: string[]; price: number }>
+    )
 
     return (
         <>
@@ -406,18 +498,29 @@ const BookingPage: React.FC = () => {
                                                     </h3>
 
                                                     <div className="space-y-2 mb-4">
-                                                        {Object.entries(groupedSeats).map(([typeName, info]) => (
-                                                            <div key={typeName} className="flex items-center text-sm">
-                                                            <span className="flex-[0.4] text-[#cccccc]">
-                                                                {typeName}
-                                                                <p>({info.price.toLocaleString('vi-VN')} đ)</p>
-                                                            </span>
+                                                        {Object.entries(groupedSeats).map(
+                                                            ([typeName, info]) => (
+                                                                <div
+                                                                    key={typeName}
+                                                                    className="flex items-center text-sm"
+                                                                >
+                                                                    <span className="flex-[0.4] text-[#cccccc]">
+                                                                        {typeName}
+                                                                        <p>
+                                                                            (
+                                                                            {info.price.toLocaleString(
+                                                                                'vi-VN'
+                                                                            )}{' '}
+                                                                            VND)
+                                                                        </p>
+                                                                    </span>
 
-                                                            <span className="flex-[0.6] text-white">
-                                                                {info.seats.join(', ')}
-                                                            </span>
-                                                            </div>
-                                                        ))}
+                                                                    <span className="flex-[0.6] text-white">
+                                                                        {info.seats.join(', ')}
+                                                                    </span>
+                                                                </div>
+                                                            )
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -447,7 +550,7 @@ const BookingPage: React.FC = () => {
                                                                         ).toLocaleString(
                                                                             'vi-VN'
                                                                         )}{' '}
-                                                                        đ
+                                                                        VND
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -467,7 +570,7 @@ const BookingPage: React.FC = () => {
                                                             {appliedVoucher.appliedDiscount.toLocaleString(
                                                                 'vi-VN'
                                                             )}{' '}
-                                                            đ
+                                                            VND
                                                         </span>
                                                     </div>
                                                 )}
@@ -476,7 +579,7 @@ const BookingPage: React.FC = () => {
                                                         Total:
                                                     </span>
                                                     <span className="text-xl font-bold text-[#fe7e32]">
-                                                        {totalCost.toLocaleString('vi-VN')} đ
+                                                        {totalCost.toLocaleString('vi-VN')} VND
                                                     </span>
                                                 </div>
                                             </div>
@@ -579,7 +682,7 @@ const BookingPage: React.FC = () => {
                                                             {refreshment.price.toLocaleString(
                                                                 'vi-VN'
                                                             )}{' '}
-                                                            đ
+                                                            VND
                                                         </p>
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">

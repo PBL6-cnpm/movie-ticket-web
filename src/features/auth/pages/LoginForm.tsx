@@ -24,7 +24,7 @@ const LoginForm = () => {
 
             if (typeof result.message === 'string') {
                 console.log('Result data:', result.data)
-                // Redirect đến trang verification email với email
+                // Redirect to the email verification page with the provided email
                 navigate({
                     to: '/email-verification',
                     search: { email }

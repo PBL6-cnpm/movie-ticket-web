@@ -1,7 +1,8 @@
 import { useBookingStore } from '@/features/movies/stores/booking.store'
 import * as authApi from '@/shared/api/auth-api'
-import { useNavigate } from '@tanstack/react-router'
 import type { CredentialResponse } from '@react-oauth/google'
+import { useNavigate } from '@tanstack/react-router'
+import { HttpStatusCode } from 'axios'
 import { useAuthStore } from '../stores/auth.store'
 import type { Account } from '../types/account.type'
 import type {
@@ -15,7 +16,6 @@ import type {
     AxiosSuccessResponse
 } from '../types/base-response.type'
 import { validateEmail, validatePassword } from '../utils/auth.util'
-import { HttpStatusCode } from 'axios'
 
 export const useAuth = () => {
     const {
@@ -30,7 +30,8 @@ export const useAuth = () => {
         clearError
     } = useAuthStore()
 
-    const { redirectUrl, clearBookingState } = useBookingStore()
+    const { redirectUrl, clearBookingState, branchId, movieId, date, showtimeId } =
+        useBookingStore()
     const navigate = useNavigate()
 
     const handleLogin = async (
@@ -57,8 +58,22 @@ export const useAuth = () => {
 
             login(data.account, data.accessToken)
 
+            const hasBookingSearchParams = Boolean(branchId || movieId || date || showtimeId)
+            const bookingSearchParams = hasBookingSearchParams
+                ? {
+                      branchId: branchId ?? undefined,
+                      movieId: movieId ?? undefined,
+                      date: date ?? undefined,
+                      showtimeId: showtimeId ?? undefined
+                  }
+                : undefined
+
             if (redirectUrl) {
-                navigate({ to: redirectUrl })
+                if (redirectUrl === '/booking' && bookingSearchParams) {
+                    navigate({ to: redirectUrl, search: bookingSearchParams })
+                } else {
+                    navigate({ to: redirectUrl })
+                }
                 clearBookingState()
             } else {
                 navigate({ to: '/' })
@@ -83,7 +98,11 @@ export const useAuth = () => {
 
             console.log('Login error:', errorMessage)
 
-            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Login failed')
+            setError(
+                errorStatusCode !== HttpStatusCode.InternalServerError
+                    ? errorMessage
+                    : 'Login failed'
+            )
 
             return {
                 success: false,
@@ -113,8 +132,22 @@ export const useAuth = () => {
 
             login(data.account, data.accessToken)
 
+            const hasBookingSearchParams = Boolean(branchId || movieId || date || showtimeId)
+            const bookingSearchParams = hasBookingSearchParams
+                ? {
+                      branchId: branchId ?? undefined,
+                      movieId: movieId ?? undefined,
+                      date: date ?? undefined,
+                      showtimeId: showtimeId ?? undefined
+                  }
+                : undefined
+
             if (redirectUrl) {
-                navigate({ to: redirectUrl })
+                if (redirectUrl === '/booking' && bookingSearchParams) {
+                    navigate({ to: redirectUrl, search: bookingSearchParams })
+                } else {
+                    navigate({ to: redirectUrl })
+                }
                 clearBookingState()
             } else {
                 navigate({ to: '/' })
@@ -131,7 +164,11 @@ export const useAuth = () => {
 
             console.log('Login error:', errorMessage)
 
-            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Social login failed')
+            setError(
+                errorStatusCode !== HttpStatusCode.InternalServerError
+                    ? errorMessage
+                    : 'Social login failed'
+            )
 
             return {
                 success: false,
@@ -184,7 +221,11 @@ export const useAuth = () => {
 
             console.log('Registration error:', errorMessage)
 
-            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Registration failed')
+            setError(
+                errorStatusCode !== HttpStatusCode.InternalServerError
+                    ? errorMessage
+                    : 'Registration failed'
+            )
 
             return {
                 success: false,
@@ -221,7 +262,11 @@ export const useAuth = () => {
 
             console.log('Resend verification email error:', errorMessage)
 
-            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Resend verification email failed')
+            setError(
+                errorStatusCode !== HttpStatusCode.InternalServerError
+                    ? errorMessage
+                    : 'Resend verification email failed'
+            )
 
             return {
                 success: false,
@@ -256,7 +301,11 @@ export const useAuth = () => {
             const errorStatusCode = apiError.statusCode
             const errorMessage = apiError.message || 'Request failed'
 
-            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Request failed')
+            setError(
+                errorStatusCode !== HttpStatusCode.InternalServerError
+                    ? errorMessage
+                    : 'Request failed'
+            )
 
             return {
                 success: false,
@@ -279,7 +328,11 @@ export const useAuth = () => {
             const errorStatusCode = apiError.statusCode
             const errorMessage = apiError.message || 'Logout failed'
 
-            setError(errorStatusCode !== HttpStatusCode.InternalServerError ? errorMessage : 'Logout failed')
+            setError(
+                errorStatusCode !== HttpStatusCode.InternalServerError
+                    ? errorMessage
+                    : 'Logout failed'
+            )
 
             return {
                 success: false,

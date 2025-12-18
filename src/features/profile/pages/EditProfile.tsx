@@ -59,7 +59,9 @@ export default function EditProfile() {
         if (result.success) {
             setIsEditing(false)
             setSelectedFile(null)
-            toast.success(result.message || 'Profile updated successfully!', { position: 'top-right' })
+            toast.success(result.message || 'Profile updated successfully!', {
+                position: 'top-right'
+            })
         } else {
             toast.error(result.message || 'Update profile failed', { position: 'top-right' })
         }
@@ -88,7 +90,7 @@ export default function EditProfile() {
                 accept="image/*"
                 className="hidden"
             />
-            {/* ... Phần Avatar không đổi ... */}
+            {/* ... Avatar section unchanged ... */}
             <div className="flex items-center gap-6 mb-8">
                 <div className="relative">
                     <div className="w-24 h-24 bg-accent rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.6)]">
@@ -181,7 +183,7 @@ export default function EditProfile() {
                     )}
                 </div>
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-8">
                 {isEditing ? (
                     <>

@@ -157,12 +157,12 @@ const ActorDetailPage: React.FC = () => {
                                                     params={{ movieId: movie.id }}
                                                     className="group cursor-pointer"
                                                     onMouseEnter={(e) => {
-                                                        // Lấy vị trí của movie card element thay vì chuột
+                                                        // Use the movie card position instead of the cursor
                                                         const rect =
                                                             e.currentTarget.getBoundingClientRect()
                                                         setMousePosition({
-                                                            x: rect.right + 10, // Hiển thị bên phải movie card
-                                                            y: rect.top + rect.height / 2 // Căn giữa theo chiều dọc
+                                                            x: rect.right + 10, // Display to the right of the movie card
+                                                            y: rect.top + rect.height / 2 // Center vertically relative to the card
                                                         })
 
                                                         // Clear existing timeout
@@ -170,7 +170,7 @@ const ActorDetailPage: React.FC = () => {
                                                             clearTimeout(hoverTimeout)
                                                         }
 
-                                                        // Set new timeout to show modal after 200ms (nhanh hơn một chút)
+                                                        // Set a new timeout to show the modal after 200ms (slightly faster)
                                                         const timeout = setTimeout(() => {
                                                             setHoveredMovieId(movie.id)
                                                         }, 200)

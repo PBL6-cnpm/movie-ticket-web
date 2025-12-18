@@ -38,11 +38,11 @@ const MoviePreviewModal: React.FC<MoviePreviewModalProps> = ({ movie, isVisible,
     const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 768
 
     let left = position.x
-    let top = position.y - modalHeight / 2 // Căn giữa modal theo chiều dọc
+    let top = position.y - modalHeight / 2 // Center the modal vertically
 
     // Adjust if modal goes off right edge
     if (left + modalWidth > windowWidth - 20) {
-        left = position.x - modalWidth - 20 // Hiển thị bên trái movie card
+        left = position.x - modalWidth - 20 // Render on the left of the movie card
     }
 
     // Adjust if modal goes off top edge
