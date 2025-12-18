@@ -5,7 +5,7 @@ import type { Voucher, VoucherApiResponse } from '../types/voucher.types'
 
 // const API_BASE_URL = 'https://api.cinestech.me/api/v1'
 
-// Hook để lấy danh sách voucher public
+// Hook to retrieve the public voucher list
 export const usePublicVouchers = () => {
     return useQuery<VoucherApiResponse>({
         queryKey: ['publicVouchers'],
@@ -20,7 +20,7 @@ export const usePublicVouchers = () => {
     })
 }
 
-// Hook để tìm kiếm voucher private bằng code
+// Hook to search for a private voucher by code
 export const useVoucherSearch = () => {
     const [isSearching, setIsSearching] = useState(false)
     const [searchResult, setSearchResult] = useState<Voucher | null>(null)

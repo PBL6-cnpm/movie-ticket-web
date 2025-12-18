@@ -5,7 +5,7 @@ const Footer: React.FC = () => {
         <footer className="bg-surface py-12 mt-16">
             <div className="container-custom">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    {/* Logo và thông tin công ty */}
+                    {/* Logo and company information */}
                     <div className="col-span-1 md:col-span-1">
                         <div className="flex items-center mb-4">
                             <div className="text-2xl font-bold text-brand-primary">CinesTech</div>

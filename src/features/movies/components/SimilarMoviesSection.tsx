@@ -11,7 +11,7 @@ const SimilarMoviesSection: React.FC<SimilarMoviesSectionProps> = ({ movies }) =
     const formatDuration = (minutes: number) => {
         const hours = Math.floor(minutes / 60)
         const mins = minutes % 60
-        return hours > 0 ? `${hours}h ${mins}phút` : `${mins}phút`
+        return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`
     }
 
     const formatDate = (dateString: string) => {
@@ -24,7 +24,7 @@ const SimilarMoviesSection: React.FC<SimilarMoviesSectionProps> = ({ movies }) =
 
     return (
         <div className="bg-surface rounded-2xl p-8 shadow-xl">
-            <h3 className="text-2xl font-bold text-primary mb-8">Phim tương tự</h3>
+            <h3 className="text-2xl font-bold text-primary mb-8">Similar Movies</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {movies.map((movie) => (
                     <Link

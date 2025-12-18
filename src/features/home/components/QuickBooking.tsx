@@ -94,7 +94,15 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
             showtimeId
         })
 
-        navigate({ to: '/booking' })
+        navigate({
+            to: '/booking',
+            search: {
+                branchId,
+                movieId,
+                date,
+                showtimeId
+            }
+        })
     }
 
     useEffect(() => {

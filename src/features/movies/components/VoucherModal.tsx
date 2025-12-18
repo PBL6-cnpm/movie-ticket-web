@@ -146,7 +146,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-[#cccccc]">Subtotal:</span>
                                 <span className="text-xl font-bold text-white">
-                                    {formatCurrency(totalAmount)} đ
+                                    {formatCurrency(totalAmount)} VND
                                 </span>
                             </div>
                             {appliedVoucher && (
@@ -156,7 +156,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                         Applied Voucher:
                                     </span>
                                     <span className="text-sm font-semibold text-green-400">
-                                        -{formatCurrency(appliedVoucher.appliedDiscount)} đ
+                                        -{formatCurrency(appliedVoucher.appliedDiscount)} VND
                                     </span>
                                 </div>
                             )}
@@ -233,7 +233,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                                 {formatCurrency(
                                                                     searchResult.maxDiscountValue
                                                                 )}{' '}
-                                                                đ)
+                                                                VND)
                                                             </span>
                                                         )}
                                                     </div>
@@ -242,7 +242,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                     <div>
                                                         Discount:{' '}
                                                         {formatCurrency(searchResult.discountValue)}{' '}
-                                                        đ
+                                                        VND
                                                     </div>
                                                 )}
                                                 {searchResult.minimumOrderValue && (
@@ -251,7 +251,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                         {formatCurrency(
                                                             searchResult.minimumOrderValue
                                                         )}{' '}
-                                                        đ
+                                                        VND
                                                     </div>
                                                 )}
                                             </div>
@@ -267,7 +267,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                                 totalAmount
                                                             )
                                                         )}{' '}
-                                                        đ
+                                                        VND
                                                     </div>
                                                 )}
 
@@ -278,7 +278,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                         {formatCurrency(
                                                             searchResult.minimumOrderValue
                                                         )}{' '}
-                                                        đ
+                                                        VND
                                                     </div>
                                                 )}
                                         </div>
@@ -342,7 +342,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                         <div className="flex items-center gap-2 text-xs text-green-400">
                                             <span>
                                                 Discount: -
-                                                {formatCurrency(appliedVoucher.appliedDiscount)} đ
+                                                {formatCurrency(appliedVoucher.appliedDiscount)} VND
                                             </span>
                                         </div>
                                     </div>
@@ -432,7 +432,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                                         {formatCurrency(
                                                                             voucher.maxDiscountValue
                                                                         )}{' '}
-                                                                        đ)
+                                                                        VND)
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -443,7 +443,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                                 {formatCurrency(
                                                                     voucher.discountValue
                                                                 )}{' '}
-                                                                đ
+                                                                VND
                                                             </div>
                                                         )}
                                                         {voucher.minimumOrderValue && (
@@ -452,7 +452,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                                 {formatCurrency(
                                                                     voucher.minimumOrderValue
                                                                 )}{' '}
-                                                                đ
+                                                                VND
                                                             </div>
                                                         )}
                                                     </div>
@@ -460,7 +460,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                     {isApplicable && discount > 0 && (
                                                         <div className="mt-2 text-sm font-medium text-[#fe7e32]">
                                                             You'll save: {formatCurrency(discount)}{' '}
-                                                            đ
+                                                            VND
                                                         </div>
                                                     )}
 
@@ -470,7 +470,7 @@ const VoucherModal: React.FC<VoucherModalProps> = ({
                                                             {formatCurrency(
                                                                 voucher.minimumOrderValue
                                                             )}{' '}
-                                                            đ
+                                                            VND
                                                         </div>
                                                     )}
                                                 </div>
