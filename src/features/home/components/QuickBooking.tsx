@@ -6,6 +6,11 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import NotificationPopup from '@/features/movies/components/NotificationPopup'
 import { useAutoNavigate } from '@/shared/hooks/useAutoNavigate'
+import {
+    formatTo24HourTime,
+    formatVietnamDateLabel,
+    formatVietnamDateValue
+} from '@/shared/utils/date.utils'
 import { useBranches, useBranchMovies, useMovieShowTimes } from '../hooks/useBookingApi'
 import { homeRoute } from '../routes'
 
@@ -45,17 +50,24 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
 
     // Available dates from showtimes
     const availableDates = useMemo(() => {
-        return showTimeDays.map((day) => ({
-            value: day.dayOfWeek.value.split('T')[0],
-            label: `${day.dayOfWeek.name}, ${new Date(day.dayOfWeek.value).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`
-        }))
+        return showTimeDays.map((day) => {
+            const value = formatVietnamDateValue(day.dayOfWeek.value)
+            const label = formatVietnamDateLabel(day.dayOfWeek.value) || day.dayOfWeek.name
+
+            return {
+                value: value || day.dayOfWeek.value.split('T')[0],
+                label
+            }
+        })
     }, [showTimeDays])
 
     // Available showtimes for selected date
     const availableShowtimes = useMemo(() => {
         if (!date) return []
 
-        const selectedDay = showTimeDays.find((day) => day.dayOfWeek.value.split('T')[0] === date)
+        const selectedDay = showTimeDays.find(
+            (day) => formatVietnamDateValue(day.dayOfWeek.value) === date
+        )
 
         return selectedDay?.times || []
     }, [showTimeDays, date])
@@ -394,7 +406,7 @@ const QuickBooking: React.FC<QuickBookingProps> = () => {
                                                         value={showtime.id}
                                                         className="bg-[#1a2232]"
                                                     >
-                                                        {showtime.time}
+                                                        {formatTo24HourTime(showtime.time)}
                                                     </option>
                                                 ))
                                             )}

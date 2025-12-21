@@ -24,6 +24,11 @@ import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
 import {
+    formatTo24HourTime,
+    formatVietnamDateLabel,
+    formatVietnamDateValue
+} from '../../../shared/utils/date.utils'
+import {
     useBranchesByMovie,
     useBranchMovieShowTimes,
     useMovieShowTimes,
@@ -59,49 +64,6 @@ const formatReviewDate = (dateString: string) =>
         month: '2-digit',
         year: 'numeric'
     })
-
-const WEEKDAY_LABELS = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday'
-]
-
-const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000
-
-const toVietnamDate = (isoString?: string | null) => {
-    if (!isoString) return null
-
-    const parsed = new Date(isoString)
-    if (Number.isNaN(parsed.getTime())) return null
-
-    return new Date(parsed.getTime() + VIETNAM_OFFSET_MS)
-}
-
-const formatVietnamDateValue = (isoString: string) => {
-    const vietnamDate = toVietnamDate(isoString)
-    if (!vietnamDate) return ''
-
-    const year = vietnamDate.getUTCFullYear()
-    const month = String(vietnamDate.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(vietnamDate.getUTCDate()).padStart(2, '0')
-
-    return `${year}-${month}-${day}`
-}
-
-const formatVietnamDateLabel = (isoString: string) => {
-    const vietnamDate = toVietnamDate(isoString)
-    if (!vietnamDate) return ''
-
-    const weekday = WEEKDAY_LABELS[vietnamDate.getUTCDay()]
-    const day = String(vietnamDate.getUTCDate()).padStart(2, '0')
-    const month = String(vietnamDate.getUTCMonth() + 1).padStart(2, '0')
-
-    return `${weekday}, ${day}/${month}`
-}
 
 // ----- SUB-COMPONENTS -----
 
@@ -525,7 +487,7 @@ const BookingSection = ({
                                             aria-live="polite"
                                         >
                                             <div className="flex flex-col items-center gap-1">
-                                                <span>{showtime.time}</span>
+                                                <span>{formatTo24HourTime(showtime.time)}</span>
                                                 {typeof showtime.availableSeats === 'number' &&
                                                     typeof showtime.totalSeats === 'number' && (
                                                         <span className="text-xs text-[#cccccc]">

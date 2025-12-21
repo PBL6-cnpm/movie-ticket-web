@@ -7,6 +7,11 @@ import Breadcrumb from '../../../shared/components/navigation/Breadcrumb'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
 import {
+    formatTo24HourTime,
+    formatVietnamDateLabel,
+    formatVietnamDateValue
+} from '../../../shared/utils/date.utils'
+import {
     useBranchShowTimes,
     useBranches,
     type Branch,
@@ -22,12 +27,8 @@ const formatDuration = (minutes: number) => {
     return `${hours}h ${mins}m`
 }
 
-const formatDayLabel = (name: string, value: string) => {
-    const date = new Date(value)
-    return `${name}, ${date.toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit'
-    })}`
+const formatDayLabel = (value: string) => {
+    return formatVietnamDateLabel(value) || ''
 }
 
 const BranchShowtimesPage: React.FC = () => {
@@ -103,7 +104,7 @@ const BranchShowtimesPage: React.FC = () => {
 
     const handleShowtimeSelect = useCallback(
         (movieId: string, dateIso: string, showtimeId: string) => {
-            const date = dateIso.split('T')[0]
+            const date = formatVietnamDateValue(dateIso) || dateIso.split('T')[0]
             const payload = {
                 branchId,
                 movieId,
@@ -281,7 +282,6 @@ const BranchShowtimesPage: React.FC = () => {
                                                                 <Calendar className="w-4 h-4" />
                                                                 <span>
                                                                     {formatDayLabel(
-                                                                        day.dayOfWeek.name,
                                                                         day.dayOfWeek.value
                                                                     )}
                                                                 </span>
@@ -301,7 +301,9 @@ const BranchShowtimesPage: React.FC = () => {
                                                                         className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg bg-[#242b3d] border border-[#fe7e32]/30 text-sm text-white hover:border-[#fe7e32] hover:bg-[#fe7e32]/10 transition-colors"
                                                                     >
                                                                         <span className="font-medium">
-                                                                            {time.time}
+                                                                            {formatTo24HourTime(
+                                                                                time.time
+                                                                            )}
                                                                         </span>
                                                                         {typeof time.availableSeats ===
                                                                             'number' &&
