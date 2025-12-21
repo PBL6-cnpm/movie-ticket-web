@@ -29,41 +29,13 @@ import {
 import React, { useEffect, useMemo, useState } from 'react'
 import PageTransition from '../../../shared/components/ui/PageTransition'
 import { useScrollToTop } from '../../../shared/hooks/useScrollToTop'
+import {
+    formatTo24HourTime,
+    formatVietnamDateFromDate,
+    toVietnamDate
+} from '../../../shared/utils/date.utils'
 import { useBranches, useMovieShowTimes } from '../../home/hooks/useBookingApi'
 import { bookingRoute } from '../routes/BookingRoute'
-
-const WEEKDAY_LABELS = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday'
-]
-
-const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000
-
-const parseSessionDate = (rawDate?: string | null) => {
-    if (!rawDate) return null
-
-    const parsed = new Date(rawDate)
-    if (Number.isNaN(parsed.getTime())) {
-        return null
-    }
-
-    return new Date(parsed.getTime() + VIETNAM_OFFSET_MS)
-}
-
-const formatSessionDateLabel = (date: Date | null) => {
-    if (!date) return null
-
-    const weekday = WEEKDAY_LABELS[date.getUTCDay()]
-    const day = String(date.getUTCDate()).padStart(2, '0')
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-
-    return `${weekday}, ${day}/${month}`
-}
 
 const BookingPage: React.FC = () => {
     console.log('=== BookingPage mounted ===')
@@ -182,21 +154,27 @@ const BookingPage: React.FC = () => {
     const totalCost = subtotalCost - voucherDiscount
 
     const calculateVoucherDiscount = (voucher: Voucher, amount: number): number => {
-        if (voucher.minimumOrderValue && amount < voucher.minimumOrderValue) return 0
+        if (voucher.minimumOrderValue && amount < voucher.minimumOrderValue) {
+            return 0
+        }
 
-        if (voucher.maxDiscountValue) {
+        const fixedValue = voucher.discountValue ?? 0
+        const percentValue = voucher.discountPercent ? (amount * voucher.discountPercent) / 100 : 0
+
+        if (percentValue > 0) {
+            const cappedPercent = voucher.maxDiscountValue
+                ? Math.min(percentValue, voucher.maxDiscountValue)
+                : percentValue
+            return Math.max(cappedPercent, fixedValue)
+        }
+
+        if (fixedValue > 0) {
             return voucher.maxDiscountValue
+                ? Math.min(fixedValue, voucher.maxDiscountValue)
+                : fixedValue
         }
 
-        if (voucher.discountValue) {
-            return voucher.discountValue
-        }
-
-        if (voucher.discountPercent) {
-            return (amount * voucher.discountPercent) / 100
-        }
-
-        return 0
+        return voucher.maxDiscountValue ?? 0
     }
 
     const handleApplyVoucher = (voucher: Voucher) => {
@@ -209,6 +187,26 @@ const BookingPage: React.FC = () => {
 
     const handleRemoveVoucher = () => setAppliedVoucher(null)
 
+    useEffect(() => {
+        if (!appliedVoucher) {
+            return
+        }
+
+        const updatedDiscount = calculateVoucherDiscount(appliedVoucher.voucher, subtotalCost)
+
+        if (updatedDiscount <= 0) {
+            setAppliedVoucher(null)
+            return
+        }
+
+        if (updatedDiscount !== appliedVoucher.appliedDiscount) {
+            setAppliedVoucher({
+                voucher: appliedVoucher.voucher,
+                appliedDiscount: updatedDiscount
+            })
+        }
+    }, [appliedVoucher, subtotalCost])
+
     const currentShowtime = showTimes
         .flatMap((day) => day.times)
         .find((time) => time.id === showtimeId)
@@ -218,8 +216,8 @@ const BookingPage: React.FC = () => {
     )
 
     const sessionDateSource = currentShowtimeGroup?.dayOfWeek.value || date
-    const sessionDate = parseSessionDate(sessionDateSource)
-    const formattedSessionDate = formatSessionDateLabel(sessionDate)
+    const sessionDate = toVietnamDate(sessionDateSource)
+    const formattedSessionDate = formatVietnamDateFromDate(sessionDate)
 
     const selectedBranch = branchId ? branches.find((branch) => branch.id === branchId) : null
     const roomName = seatLayoutData?.roomName ?? null
@@ -458,7 +456,11 @@ const BookingPage: React.FC = () => {
                                                     {currentShowtime?.time && (
                                                         <div className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5">
                                                             <Clock className="w-3.5 h-3.5 text-[#fe7e32]" />
-                                                            <span>{currentShowtime.time}</span>
+                                                            <span>
+                                                                {formatTo24HourTime(
+                                                                    currentShowtime.time
+                                                                )}
+                                                            </span>
                                                         </div>
                                                     )}
                                                     {roomName && (

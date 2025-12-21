@@ -1,10 +1,20 @@
 import ProtectedRoute from '@/features/auth/routes/ProtectedRoute'
+import { Armchair, Calendar, CheckCircle, MapPin, Popcorn, X, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useBooking, type BookingData } from '../hooks/useBooking'
-import { Armchair, Calendar, CheckCircle, MapPin, Popcorn, X, XCircle } from 'lucide-react';
 
-const Pagination = ({ currentPage, totalPages, onPageChange, isLoading }: { currentPage: number, totalPages: number, onPageChange: (page: number) => void, isLoading: boolean }) => {
-    if (totalPages <= 1) return null;
+const Pagination = ({
+    currentPage,
+    totalPages,
+    onPageChange,
+    isLoading
+}: {
+    currentPage: number
+    totalPages: number
+    onPageChange: (page: number) => void
+    isLoading: boolean
+}) => {
+    if (totalPages <= 1) return null
 
     return (
         <div className="flex items-center justify-center gap-4 mt-8">
@@ -22,7 +32,12 @@ const Pagination = ({ currentPage, totalPages, onPageChange, isLoading }: { curr
                 "
             >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                    />
                 </svg>
             </button>
             <span className="text-secondary font-medium">
@@ -42,7 +57,12 @@ const Pagination = ({ currentPage, totalPages, onPageChange, isLoading }: { curr
                 "
             >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                    />
                 </svg>
             </button>
         </div>
@@ -56,11 +76,11 @@ export default function BookingHistoryPage() {
     const [selectedQr, setSelectedQr] = useState<string | null>(null)
     const { getBookings, isLoading } = useBooking()
 
-    const BOOKINGS_PER_PAGE = 5;
+    const BOOKINGS_PER_PAGE = 5
 
     useEffect(() => {
         const load = async () => {
-            const response = await getBookings(currentPage, BOOKINGS_PER_PAGE);
+            const response = await getBookings(currentPage, BOOKINGS_PER_PAGE)
             if (response.success && response.data) {
                 setBookings(response.data.items)
                 setTotalPages(response.data.meta.totalPages)
@@ -74,13 +94,13 @@ export default function BookingHistoryPage() {
 
     const handlePageChange = (newPage: number) => {
         if (newPage > 0 && newPage <= totalPages) {
-            setCurrentPage(newPage);
+            setCurrentPage(newPage)
         }
     }
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString)
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleDateString('vi-VN', {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -89,7 +109,7 @@ export default function BookingHistoryPage() {
 
     const formatTime = (dateString: string) => {
         const date = new Date(dateString)
-        return date.toLocaleTimeString('en-US', {
+        return date.toLocaleTimeString('vi-VN', {
             hour: '2-digit',
             minute: '2-digit'
         })
@@ -102,22 +122,27 @@ export default function BookingHistoryPage() {
         }).format(price)
     }
 
-    const groupSeatsByType = (seats: { typeSeat: { name: string }, name: string }[]) => {
+    const groupSeatsByType = (seats: { typeSeat: { name: string }; name: string }[]) => {
         return Object.entries(
-            seats.reduce((acc, seat) => {
-            const typeName = seat.typeSeat.name || 'Standard';
-            if (!acc[typeName]) acc[typeName] = [];
-            acc[typeName].push(seat.name);
-            return acc;
-            }, {} as Record<string, string[]>)
-        );
+            seats.reduce(
+                (acc, seat) => {
+                    const typeName = seat.typeSeat.name || 'Standard'
+                    if (!acc[typeName]) acc[typeName] = []
+                    acc[typeName].push(seat.name)
+                    return acc
+                },
+                {} as Record<string, string[]>
+            )
+        )
     }
 
     return (
         <ProtectedRoute>
             <div className="p-6 max-w-6xl mx-auto">
                 <h2 className="text-2xl font-bold text-primary mb-2">Booking History</h2>
-                <p className="text-sm text-secondary mb-6">Review your past and upcoming bookings.</p>
+                <p className="text-sm text-secondary mb-6">
+                    Review your past and upcoming bookings.
+                </p>
 
                 {isLoading && bookings.length === 0 ? (
                     <div className="flex justify-center items-center h-64">
@@ -146,7 +171,7 @@ export default function BookingHistoryPage() {
 
                                     {/* Booking Details */}
                                     <div className="flex-1 flex flex-col p-11">
-                                         <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-start justify-between mb-3">
                                             <div>
                                                 <h3 className="font-bold text-xl text-primary">
                                                     {booking.showTime.movie.name}
@@ -166,7 +191,9 @@ export default function BookingHistoryPage() {
                                                         <XCircle className="text-gray-400 w-5 h-5" />
                                                     )}
                                                     <div className="absolute left-1/2 -translate-x-1/2 mt-2 px-1 py-1 rounded-md text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition bg-gray-700 whitespace-nowrap z-50">
-                                                        {booking.checkInStatus ? 'Checked in' : 'Not checked in'}
+                                                        {booking.checkInStatus
+                                                            ? 'Checked in'
+                                                            : 'Not checked in'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -187,30 +214,49 @@ export default function BookingHistoryPage() {
                                                 <Armchair className="w-4 h-4 flex-shrink-0 mt-1" />
 
                                                 <div className="flex-1 flex flex-col gap-1">
-                                                    {groupSeatsByType(booking.seats).map(([typeName, seats]) => (
-                                                    <div key={typeName} className="flex gap-1 items-center">
-                                                        <span className="text-[#cccccc]">{typeName}:</span>
-                                                        <span className="text-white">{seats.join(', ')}</span>
-                                                    </div>
-                                                    ))}
+                                                    {groupSeatsByType(booking.seats).map(
+                                                        ([typeName, seats]) => (
+                                                            <div
+                                                                key={typeName}
+                                                                className="flex gap-1 items-center"
+                                                            >
+                                                                <span className="text-[#cccccc]">
+                                                                    {typeName}:
+                                                                </span>
+                                                                <span className="text-white">
+                                                                    {seats.join(', ')}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                    )}
                                                 </div>
                                             </div>
-                                            {booking.refreshmentss && booking.refreshmentss.length > 0 && (
-                                                <div className="flex items-start gap-2 pt-2 border-t border-border">
-                                                    <Popcorn className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                                    <span>
-                                                        Refreshments: {booking.refreshmentss.map(r => r.name).join(', ')}
-                                                    </span>
-                                                </div>
-                                            )}
+                                            {booking.refreshmentss &&
+                                                booking.refreshmentss.length > 0 && (
+                                                    <div className="flex items-start gap-2 pt-2 border-t border-border">
+                                                        <Popcorn className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                                        <span>
+                                                            Refreshments:{' '}
+                                                            {booking.refreshmentss
+                                                                .map((r) => r.name)
+                                                                .join(', ')}
+                                                        </span>
+                                                    </div>
+                                                )}
                                         </div>
                                         <div className="mt-4">
                                             {booking.qrUrl ? (
-                                                <button onClick={() => setSelectedQr(booking.qrUrl)} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors hover:shadow-lg hover:cursor-pointer transition-transform duration-300 hover:scale-105">
+                                                <button
+                                                    onClick={() => setSelectedQr(booking.qrUrl)}
+                                                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors hover:shadow-lg hover:cursor-pointer transition-transform duration-300 hover:scale-105"
+                                                >
                                                     View QR Code
                                                 </button>
                                             ) : (
-                                                <button disabled className="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
+                                                <button
+                                                    disabled
+                                                    className="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
+                                                >
                                                     QR Code Unavailable
                                                 </button>
                                             )}
@@ -227,18 +273,31 @@ export default function BookingHistoryPage() {
                         />
                     </>
                 )}
-                
+
                 {selectedQr && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedQr(null)}>
-                        <div className="bg-white rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        onClick={() => setSelectedQr(null)}
+                    >
+                        <div
+                            className="bg-white rounded-lg p-6 max-w-md w-full"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-gray-900">QR Code</h3>
-                                <button onClick={() => setSelectedQr(null)} className="text-gray-400 hover:text-gray-600">
+                                <button
+                                    onClick={() => setSelectedQr(null)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
                                     <X className="w-5 h-5 hover:cursor-pointer" />
                                 </button>
                             </div>
                             <div className="flex justify-center">
-                                <img src={selectedQr} alt="QR Code" className="max-w-full h-auto rounded-lg" />
+                                <img
+                                    src={selectedQr}
+                                    alt="QR Code"
+                                    className="max-w-full h-auto rounded-lg"
+                                />
                             </div>
                             <p className="text-sm text-gray-500 text-center mt-4">
                                 Show this QR code at the cinema entrance.
